@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EleCho.MegaTextures", "EleCho.MegaTextures\EleCho.MegaTextures.csproj", "{20492EBE-2B4F-4D36-8755-0C45C01BEB41}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{20492EBE-2B4F-4D36-8755-0C45C01BEB41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20492EBE-2B4F-4D36-8755-0C45C01BEB41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20492EBE-2B4F-4D36-8755-0C45C01BEB41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20492EBE-2B4F-4D36-8755-0C45C01BEB41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {25B0E463-B041-4048-9DE3-AC6E9CA7DF9E}
+	EndGlobalSection
+EndGlobal
