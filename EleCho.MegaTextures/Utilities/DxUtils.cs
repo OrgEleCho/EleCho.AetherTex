@@ -5,13 +5,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using EleCho.MegaTextures.Helpers;
+using EleCho.AetherTex.Helpers;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
 using Silk.NET.Direct3D11;
 using Silk.NET.DXGI;
 
-namespace EleCho.MegaTextures.Utilities
+namespace EleCho.AetherTex.Utilities
 {
     internal static class DxUtils
     {

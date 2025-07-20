@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using EleCho.MegaTextures;
+using EleCho.AetherTex;
 
 namespace MegaTextures.Previewer.Controls
 {

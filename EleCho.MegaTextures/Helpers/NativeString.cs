@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EleCho.MegaTextures.Helpers
+namespace EleCho.AetherTex.Helpers
 {
     internal class NativeString : IDisposable
     {

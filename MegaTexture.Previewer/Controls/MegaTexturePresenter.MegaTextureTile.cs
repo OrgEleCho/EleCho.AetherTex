@@ -2,7 +2,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EleCho.MegaTextures;
+using EleCho.AetherTex;
 
 namespace MegaTextures.Previewer.Controls
 {

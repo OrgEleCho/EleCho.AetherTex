@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EleCho.MegaTextures.Utilities
+namespace EleCho.AetherTex.Utilities
 {
     internal static class AssemblyResourceUtils
     {

@@ -9,11 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Shaders\MegaTexture.hlsl" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Shaders\MegaTexture.hlsl" />
+    <EmbeddedResource Include="Shaders\AetherTexImage.hlsl" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace EleCho.MegaTextures
+namespace EleCho.AetherTex
 {
     public record struct QuadVectors(Vector2 LeftTop, Vector2 RightTop, Vector2 RightBottom, Vector2 LeftBottom);
 

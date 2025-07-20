@@ -1,13 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using EleCho.MegaTextures.Utilities;
+using EleCho.AetherTex.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
 using Silk.NET.Direct3D11;
 
-namespace EleCho.MegaTextures
+namespace EleCho.AetherTex
 {
-    public sealed unsafe partial class MegaTexture
+    public sealed unsafe partial class AetherTexImage
     {
         public sealed class ExprSource : IDisposable
         {
@@ -15,12 +15,12 @@ namespace EleCho.MegaTextures
             private ComPtr<ID3D11PixelShader> _pixelShader;
             private bool _disposedValue;
 
-            public MegaTexture Owner { get; }
+            public AetherTexImage Owner { get; }
 
-            public ExprSource(MegaTexture owner, string expression)
+            public ExprSource(AetherTexImage owner, string expression)
             {
                 _pixelShaderBlob = DxUtils.Compile(owner._compiler, "shader", "ps_main", "ps_5_0",
-                    AssemblyResourceUtils.GetShaderBytes("MegaTexture.hlsl"),
+                    AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"),
                     new Dictionary<string, string>()
                     {
                         ["SourceCount"] = owner._sources.Length.ToString(),

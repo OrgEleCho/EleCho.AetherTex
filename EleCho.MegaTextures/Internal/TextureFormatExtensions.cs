@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Silk.NET.DXGI;
 
-namespace EleCho.MegaTextures.Internal
+namespace EleCho.AetherTex.Internal
 {
     internal static class TextureFormatExtensions
     {

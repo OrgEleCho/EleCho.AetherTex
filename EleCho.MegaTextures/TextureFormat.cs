@@ -1,4 +1,4 @@
-﻿namespace EleCho.MegaTextures
+﻿namespace EleCho.AetherTex
 {
     public enum TextureFormat
     {

@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EleCho.MegaTextures;
+using EleCho.AetherTex;
 using Microsoft.Win32;
 
 namespace MegaTextures.Previewer.Dialogs

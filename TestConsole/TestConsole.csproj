@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EleCho.MegaTextures\EleCho.MegaTextures.csproj" />
+    <ProjectReference Include="..\EleCho.MegaTextures\EleCho.AetherTex.csproj" />
   </ItemGroup>
 
   <ItemGroup>

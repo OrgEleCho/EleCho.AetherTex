@@ -1,6 +1,6 @@
 ﻿
 using System.Numerics;
-using EleCho.MegaTextures;
+using EleCho.AetherTex;
 using SkiaSharp;
 
 namespace TestConsole;

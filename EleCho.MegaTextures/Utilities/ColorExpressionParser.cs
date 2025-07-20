@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Irony.Parsing;
 using Silk.NET.Core.Native;
-using static EleCho.MegaTextures.Utilities.ColorExpressionParser;
+using static EleCho.AetherTex.Utilities.ColorExpressionParser;
 
-namespace EleCho.MegaTextures.Utilities
+namespace EleCho.AetherTex.Utilities
 {
     internal static partial class ColorExpressionParser
     {

@@ -10,7 +10,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using EleCho.MegaTextures;
+using EleCho.AetherTex;
 using MegaTextures.Previewer.Dialogs;
 using SkiaSharp;
 using static System.Net.Mime.MediaTypeNames;

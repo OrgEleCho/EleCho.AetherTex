@@ -1,4 +1,4 @@
-﻿namespace EleCho.MegaTextures.Utilities
+﻿namespace EleCho.AetherTex.Utilities
 {
     internal static partial class ColorExpressionParser
     {

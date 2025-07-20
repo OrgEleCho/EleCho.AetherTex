@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EleCho.MegaTextures.Utilities
+namespace EleCho.AetherTex.Utilities
 {
     public enum ColorSpace
     {

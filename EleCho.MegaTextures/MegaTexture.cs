@@ -1,16 +1,16 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using EleCho.MegaTextures.Helpers;
-using EleCho.MegaTextures.Internal;
-using EleCho.MegaTextures.Utilities;
+using EleCho.AetherTex.Helpers;
+using EleCho.AetherTex.Internal;
+using EleCho.AetherTex.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
 using Silk.NET.Direct3D11;
 using Silk.NET.DXGI;
 
-namespace EleCho.MegaTextures
+namespace EleCho.AetherTex
 {
-    public sealed unsafe partial class MegaTexture : IDisposable
+    public sealed unsafe partial class AetherTexImage : IDisposable
     {
         const int TileMaxWidth = 8192;
         const int TileMaxHeight = 8192;
@@ -61,7 +61,7 @@ namespace EleCho.MegaTextures
         /// <param name="columns"></param>
         /// <param name="sources"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        public MegaTexture(
+        public AetherTexImage(
             TextureFormat format, int tileWidth, int tileHeight, int rows, int columns,
             IEnumerable<string> sources)
         {
@@ -126,7 +126,7 @@ namespace EleCho.MegaTextures
 
             _vertexBuffer = DxUtils.CreateBuffer(_device, _vertexBufferDesc);
 
-            _vertexShaderBlob = DxUtils.Compile(_compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("MegaTexture.hlsl"), new Dictionary<string, string>()
+            _vertexShaderBlob = DxUtils.Compile(_compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"), new Dictionary<string, string>()
             {
                 ["SourceCount"] = _sources.Length.ToString(),
             });
@@ -176,7 +176,7 @@ namespace EleCho.MegaTextures
         /// <param name="tileHeight"></param>
         /// <param name="rows"></param>
         /// <param name="columns"></param>
-        public MegaTexture(
+        public AetherTexImage(
             TextureFormat format, int tileWidth, int tileHeight, int rows, int columns)
             : this(format, tileWidth, tileHeight, rows, columns, ["color"])
         {
@@ -190,7 +190,7 @@ namespace EleCho.MegaTextures
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="sources"></param>
-        public MegaTexture(
+        public AetherTexImage(
             TextureFormat format, int width, int height,
             IEnumerable<string> sources) : this(
                 format,
@@ -204,12 +204,12 @@ namespace EleCho.MegaTextures
         }
 
         /// <summary>
-        /// Creates a MegaTexture with the specified format, width, and height.
+        /// Creates a AetherTexImage with the specified format, width, and height.
         /// </summary>
         /// <param name="format"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
-        public MegaTexture(
+        public AetherTexImage(
             TextureFormat format, int width, int height) : this(format, width, height, ["color"])
         {
 
@@ -366,7 +366,7 @@ namespace EleCho.MegaTextures
             }
         }
 
-        ~MegaTexture()
+        ~AetherTexImage()
         {
             Dispose(disposing: false);
         }
