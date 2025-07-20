@@ -23,7 +23,7 @@ namespace MegaTextures.Previewer.Dialogs
     [ObservableObject]
     public partial class ImportImageDialog : Window
     {
-        private readonly MegaTexture _texture;
+        private readonly AetherTexImage _texture;
 
         private OpenFileDialog? _openFileDialog;
 
@@ -41,7 +41,7 @@ namespace MegaTextures.Previewer.Dialogs
 
         public IReadOnlyList<string> AvailableSources => _texture.Sources;
 
-        public ImportImageDialog(MegaTexture texture)
+        public ImportImageDialog(AetherTexImage texture)
         {
             DataContext = this;
             _texture = texture;

@@ -24,7 +24,7 @@ namespace MegaTextures.Previewer
     public partial class MainWindow : Window
     {
         [ObservableProperty]
-        private MegaTexture? _currentTexture;
+        private AetherTexImage? _currentTexture;
 
         [ObservableProperty]
         private string? _presenterSource;
@@ -86,7 +86,7 @@ namespace MegaTextures.Previewer
                 return;
             }
 
-            CurrentTexture = new MegaTexture(
+            CurrentTexture = new AetherTexImage(
                 TextureFormat.Bgra8888,
                 newTextureDialog.TileWidth,
                 newTextureDialog.TileHeight,
@@ -142,7 +142,7 @@ namespace MegaTextures.Previewer
                 return;
             }
 
-            MegaTexture.ExprSource source;
+            AetherTexImage.ExprSource source;
             try
             {
                 source = CurrentTexture.CreateSource(OutputSourceExpression);

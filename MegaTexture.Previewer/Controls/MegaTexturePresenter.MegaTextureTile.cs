@@ -8,9 +8,9 @@ namespace MegaTextures.Previewer.Controls
 {
     public partial class MegaTexturePresenter
     {
-        private readonly Dictionary<string, MegaTexture.ExprSource> _cachedSources = new();
+        private readonly Dictionary<string, AetherTexImage.ExprSource> _cachedSources = new();
 
-        private MegaTexture.ExprSource? GetCachedSource(string text)
+        private AetherTexImage.ExprSource? GetCachedSource(string text)
         {
             if (Texture is null)
             {
@@ -36,7 +36,7 @@ namespace MegaTextures.Previewer.Controls
         {
             private WriteableBitmap? _tileImage;
 
-            public MegaTextureTile(MegaTexturePresenter owner, MegaTexture texture, int row, int column)
+            public MegaTextureTile(MegaTexturePresenter owner, AetherTexImage texture, int row, int column)
             {
                 Owner = owner;
                 Texture = texture;
@@ -45,7 +45,7 @@ namespace MegaTextures.Previewer.Controls
             }
 
             public MegaTexturePresenter Owner { get; }
-            public MegaTexture Texture { get; }
+            public AetherTexImage Texture { get; }
             public int Row { get; }
             public int Column { get; }
 

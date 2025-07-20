@@ -19,9 +19,9 @@ namespace MegaTextures.Previewer.Controls
         private Point _draggingStartMousePosition;
         private Vector2 _draggingVectorStartValue;
 
-        public MegaTexture Reference
+        public AetherTexImage Reference
         {
-            get { return (MegaTexture)GetValue(ReferenceProperty); }
+            get { return (AetherTexImage)GetValue(ReferenceProperty); }
             set { SetValue(ReferenceProperty, value); }
         }
 
@@ -157,7 +157,7 @@ namespace MegaTextures.Previewer.Controls
 
 
         public static readonly DependencyProperty ReferenceProperty =
-            DependencyProperty.Register("Reference", typeof(MegaTexture), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("Reference", typeof(AetherTexImage), typeof(MegaTextureQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty HandleSizeProperty =

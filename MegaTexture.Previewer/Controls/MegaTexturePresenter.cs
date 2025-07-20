@@ -23,9 +23,9 @@ namespace MegaTextures.Previewer.Controls
             DefaultStyleKeyProperty.OverrideMetadata(typeof(MegaTexturePresenter), new FrameworkPropertyMetadata(typeof(MegaTexturePresenter)));
         }
 
-        public MegaTexture Texture
+        public AetherTexImage Texture
         {
-            get { return (MegaTexture)GetValue(TextureProperty); }
+            get { return (AetherTexImage)GetValue(TextureProperty); }
             set { SetValue(TextureProperty, value); }
         }
 
@@ -58,7 +58,7 @@ namespace MegaTextures.Previewer.Controls
 
 
         public static readonly DependencyProperty TextureProperty =
-            DependencyProperty.Register(nameof(Texture), typeof(MegaTexture), typeof(MegaTexturePresenter), new PropertyMetadata(null, propertyChangedCallback: OnTextureChanged));
+            DependencyProperty.Register(nameof(Texture), typeof(AetherTexImage), typeof(MegaTexturePresenter), new PropertyMetadata(null, propertyChangedCallback: OnTextureChanged));
 
         public static readonly DependencyProperty SourceProperty =
             DependencyProperty.Register(nameof(Source), typeof(string), typeof(MegaTexturePresenter), new PropertyMetadata("color", propertyChangedCallback: OnSourceChanged));
@@ -98,7 +98,7 @@ namespace MegaTextures.Previewer.Controls
                 return;
             }
 
-            if (e.NewValue is MegaTexture newTexture)
+            if (e.NewValue is AetherTexImage newTexture)
             {
                 var tiles = new List<MegaTextureTile>();
                 for (int y = 0; y < newTexture.Rows; y++)

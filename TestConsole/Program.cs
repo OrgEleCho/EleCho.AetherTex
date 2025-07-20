@@ -16,7 +16,7 @@ internal class Program
     {
         var bitmap = SKBitmap.Decode("test.jpg");
         var bitmap2 = new SKBitmap(512, 512, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-        var megaTexture = new MegaTexture(TextureFormat.Bgra8888, 1024, 1024, 2, 2);
+        var megaTexture = new AetherTexImage(TextureFormat.Bgra8888, 1024, 1024, 2, 2);
         megaTexture.Write(GetTextureData(bitmap), 0, 0);
         megaTexture.Write(GetTextureData(bitmap), 1, 0);
         megaTexture.Write(GetTextureData(bitmap), 0, 1);
