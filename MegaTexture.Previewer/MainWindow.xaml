@@ -1,0 +1,63 @@
+﻿<Window x:Class="MegaTextures.Previewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MegaTextures.Previewer"
+        xmlns:ctrl="clr-namespace:MegaTextures.Previewer.Controls"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800"
+        d:DataContext="{d:DesignInstance Type=local:MainWindow}">
+    <Grid>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="File">
+                    <MenuItem Header="New" Click="NewMegaTexture_MenuItem_Click"/>
+                    <MenuItem Header="Import" Click="ImportImage_MenuItem_Click"/>
+                </MenuItem>
+            </Menu>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="3"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <DockPanel>
+                    <Grid DockPanel.Dock="Bottom">
+                        <StackPanel Margin="8">
+                            <TextBlock Text="Source"/>
+                            <ComboBox Name="sourceSelector"
+                                      ItemsSource="{Binding CurrentTexture.Sources}"
+                                      SelectedItem="{Binding PresenterSource}"/>
+                        </StackPanel>
+                    </Grid>
+                    <ctrl:MegaTexturePresenter x:Name="megaTexturePresenter"
+                                               Texture="{Binding CurrentTexture}"
+                                               QuadVectors="{Binding QuadVectors}"
+                                               Source="{Binding PresenterSource}"/>
+                </DockPanel>
+
+                <GridSplitter VerticalAlignment="Stretch"
+                              HorizontalAlignment="Stretch"
+                              Grid.Column="1"
+                              Background="Transparent"/>
+                <Rectangle Grid.Column="1"
+                           Width="1"
+                           Fill="Gray"/>
+
+                <DockPanel Grid.Column="2">
+                    <Grid DockPanel.Dock="Bottom">
+                        <StackPanel Margin="8">
+                            <TextBlock Text="Source"/>
+                            <ComboBox ItemsSource="{Binding PredefinedSources}"
+                                      IsEditable="True"
+                                      Text="{Binding OutputSourceExpression}"/>
+                        </StackPanel>
+                    </Grid>
+                    <Image Source="{Binding CurrentOutput}" />
+                </DockPanel>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

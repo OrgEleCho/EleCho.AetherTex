@@ -1,0 +1,38 @@
+﻿<Window x:Class="MegaTextures.Previewer.Dialogs.NewTextureDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MegaTextures.Previewer.Dialogs"
+        mc:Ignorable="d"
+        Title="NewTextureDialog" Height="380" Width="320"
+        d:DataContext="{d:DesignInstance Type=local:NewTextureDialog}">
+    <DockPanel Margin="18">
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="Cancel"
+                    Click="CancelButton_Click"/>
+            <Button Content="OK"
+                    Margin="4 0 0 0"
+                    Click="OKButton_Click"/>
+        </StackPanel>
+        <StackPanel>
+            <TextBlock Text="TileWidth:"/>
+            <TextBox Text="{Binding TileWidth}"/>
+            <TextBlock Text="TileHeight:"
+                       Margin="0 4 0 0"/>
+            <TextBox Text="{Binding TileHeight}"/>
+            <TextBlock Text="Columns:"
+                       Margin="0 4 0 0"/>
+            <TextBox Text="{Binding Columns}"/>
+            <TextBlock Text="Rows:"
+                       Margin="0 4 0 0"/>
+            <TextBox Text="{Binding Rows}"/>
+            <TextBlock Text="Sources:"
+                       Margin="0 4 0 0"/>
+            <TextBox Text="{Binding Sources}"
+                     AcceptsReturn="True"/>
+        </StackPanel>
+    </DockPanel>
+</Window>

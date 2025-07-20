@@ -15,6 +15,8 @@ namespace EleCho.MegaTextures
             private ComPtr<ID3D11PixelShader> _pixelShader;
             private bool _disposedValue;
 
+            public MegaTexture Owner { get; }
+
             public ExprSource(MegaTexture owner, string expression)
             {
                 _pixelShaderBlob = DxUtils.Compile(owner._compiler, "shader", "ps_main", "ps_5_0",
@@ -30,6 +32,7 @@ namespace EleCho.MegaTextures
                     });
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);
+                Owner = owner;
             }
 
             internal void ApplyPixelShader(ComPtr<ID3D11DeviceContext> deviceContext)

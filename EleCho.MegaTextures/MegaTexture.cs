@@ -237,6 +237,11 @@ namespace EleCho.MegaTextures
 
         private void Render(ExprSource source, TextureData buffer)
         {
+            if (!ReferenceEquals(source.Owner, this))
+            {
+                throw new ArgumentException("Source is not from current texture");
+            }
+
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
 
             using var renderTargetTexture = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
@@ -267,7 +272,7 @@ namespace EleCho.MegaTextures
             uint vertexStride = sizeof(float) * 4;
             uint vertexOffset = 0;
             _deviceContext.IASetVertexBuffers(0, 1, ref _vertexBuffer, in vertexStride, in vertexOffset);
-            _deviceContext.IASetPrimitiveTopology(D3DPrimitiveTopology.D3DPrimitiveTopologyTrianglestrip);
+            _deviceContext.IASetPrimitiveTopology(D3DPrimitiveTopology.D3D10PrimitiveTopologyTrianglestrip);
             _deviceContext.IASetInputLayout(_inputLayout);
 
             _deviceContext.PSSetShaderResources(0, (uint)_textureViews.Length, ref _textureViews[0]);
