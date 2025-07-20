@@ -26,7 +26,8 @@ namespace EleCho.MegaTextures.Utilities
             texture.GetDesc(ref desc);
 
             MappedSubresource mappedSubResource = default;
-            deviceContext.Map(texture, subResource, Map.Read, 0, ref mappedSubResource);
+            var hr = deviceContext.Map(texture, subResource, Map.Read, 0, ref mappedSubResource);
+            DxUtils.ThrowHResult(hr);
 
             var rowsToCopy = Math.Min(desc.Height, buffer.Height);
             var rowBytesToCopy = Math.Min(mappedSubResource.RowPitch, buffer.RowBytes);
@@ -46,7 +47,7 @@ namespace EleCho.MegaTextures.Utilities
         {
             ComPtr<ID3D11Texture2D> texture = default;
             var hr = device.CreateTexture2D(in desc, in initialData, ref texture);
-            SilkMarshal.ThrowHResult(hr);
+            DxUtils.ThrowHResult(hr);
 
             return texture;
         }
@@ -57,7 +58,8 @@ namespace EleCho.MegaTextures.Utilities
         public static ComPtr<ID3D11Buffer> CreateBuffer(ComPtr<ID3D11Device> device, in BufferDesc desc, in SubresourceData initialData)
         {
             ComPtr<ID3D11Buffer> buffer = default;
-            device.CreateBuffer(in desc, in initialData, ref buffer);
+            var hr = device.CreateBuffer(in desc, in initialData, ref buffer);
+            DxUtils.ThrowHResult(hr);
 
             return buffer;
         }
@@ -68,7 +70,9 @@ namespace EleCho.MegaTextures.Utilities
         public static ComPtr<ID3D11RenderTargetView> CreateRenderTargetView(ComPtr<ID3D11Device> device, ComPtr<ID3D11Texture2D> texture, in RenderTargetViewDesc desc)
         {
             ComPtr<ID3D11RenderTargetView> renderTarget = default;
-            device.CreateRenderTargetView(texture, in desc, ref renderTarget);
+            var hr = device.CreateRenderTargetView(texture, in desc, ref renderTarget);
+            DxUtils.ThrowHResult(hr);
+
             return renderTarget;
         }
 
@@ -197,7 +201,7 @@ namespace EleCho.MegaTextures.Utilities
         {
             ComPtr<ID3D11VertexShader> shader = default;
             var hr = device.CreateVertexShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
-            SilkMarshal.ThrowHResult(hr);
+            DxUtils.ThrowHResult(hr);
 
             return shader;
         }
@@ -206,7 +210,7 @@ namespace EleCho.MegaTextures.Utilities
         {
             ComPtr<ID3D11PixelShader> shader = default;
             var hr = device.CreatePixelShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
-            SilkMarshal.ThrowHResult(hr);
+            DxUtils.ThrowHResult(hr);
 
             return shader;
         }
@@ -221,7 +225,7 @@ namespace EleCho.MegaTextures.Utilities
         {
             ComPtr<ID3D11InputLayout> inputLayout = default;
             var hr = device.CreateInputLayout(in inputElements[0], (uint)inputElements.Length, shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), ref inputLayout);
-            SilkMarshal.ThrowHResult(hr);
+            DxUtils.ThrowHResult(hr);
 
             return inputLayout;
         }
@@ -230,9 +234,16 @@ namespace EleCho.MegaTextures.Utilities
         {
             ComPtr<ID3D11SamplerState> samplerState = default;
             var hr = device.CreateSamplerState(in desc, ref samplerState);
-            SilkMarshal.ThrowHResult(hr);
+            DxUtils.ThrowHResult(hr);
 
             return samplerState;
+        }
+
+        public static void ThrowHResult(int hr)
+        {
+            // TODO: Some check
+
+            SilkMarshal.ThrowHResult(hr);
         }
     }
 }
