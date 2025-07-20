@@ -92,21 +92,6 @@ namespace EleCho.MegaTextures.Utilities
                 return;
             }
 
-            // create texture for copy
-            var outputBufferDesc = new Texture2DDesc()
-            {
-                Width = desc.Width,
-                Height = desc.Height,
-                ArraySize = 1,
-                BindFlags = 0,
-                CPUAccessFlags = (uint)CpuAccessFlag.Read,
-                Format = desc.Format,
-                MipLevels = 1,
-                MiscFlags = 0,
-                SampleDesc = new SampleDesc(1, 0),
-                Usage = Usage.Staging,
-            };
-
             using var outputBuffer = CreateTexture2D(device, new Texture2DDesc()
             {
                 Width = desc.Width,
