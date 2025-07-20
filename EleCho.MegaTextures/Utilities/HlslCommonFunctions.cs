@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LibImageProcessing.Helpers
+namespace EleCho.MegaTextures.Utilities
 {
     internal static class HlslCommonFunctions
     {

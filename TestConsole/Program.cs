@@ -20,13 +20,14 @@ internal class Program
         megaTexture.Write(GetTextureData(bitmap), 0, 0);
 
         var quad = new QuadVectors(
-            new Vector2(0, 0),
             new Vector2(512, 0),
             new Vector2(512, 512),
-            new Vector2(0, 512));
+            new Vector2(0, 512),
+            new Vector2(0, 0));
 
         using var output = File.Create("output.png");
-        megaTexture.Read(megaTexture.DefaultSource, quad, GetTextureData(bitmap2));
+        var source = megaTexture.CreateSource("color.bgr");
+        megaTexture.Read(source, quad, GetTextureData(bitmap2));
         bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
 
         Console.WriteLine("Hello, World!");

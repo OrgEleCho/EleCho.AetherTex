@@ -1,6 +1,6 @@
 ﻿using Irony.Parsing;
 
-namespace LibImageProcessing.Helpers
+namespace EleCho.MegaTextures.Utilities
 {
     internal static partial class ColorExpressionParser
     {

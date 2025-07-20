@@ -26,6 +26,7 @@ namespace EleCho.MegaTextures
                         ["TileHeight"] = owner.TileHeight.ToString(),
                         ["TileRows"] = owner.Rows.ToString(),
                         ["TileColumns"] = owner.Columns.ToString(),
+                        ["SourceExpr"] = ColorExpressionParser.GetShaderExpressionForSourceExpr(expression, owner._sources)
                     });
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);

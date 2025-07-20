@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Irony.Parsing;
 using Silk.NET.Core.Native;
-using static LibImageProcessing.Helpers.ColorExpressionParser;
+using static EleCho.MegaTextures.Utilities.ColorExpressionParser;
 
-namespace LibImageProcessing.Helpers
+namespace EleCho.MegaTextures.Utilities
 {
     internal static partial class ColorExpressionParser
     {
@@ -22,15 +22,8 @@ namespace LibImageProcessing.Helpers
             s_parser = new Parser(s_grammar);
         }
 
-        public record struct ValueNodeInfo(string Text, int Components);
+        public record struct ValueNodeInfo(string Text, int Components, ColorSpace ColorSpace, Variable[] Members);
 
-        private static IEnumerable<string> RepeatString(string value, int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                yield return value;
-            }
-        }
         private static IEnumerable<ValueNodeInfo> ExpressionListNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables, VectorFunction[] availableFunctions)
         {
             ParseTreeNode? nextNode = node;
@@ -53,7 +46,7 @@ namespace LibImageProcessing.Helpers
                 }
             }
         }
-        private static IEnumerable<ValueNodeInfo> ArgumentListNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables, VectorFunction[] availableFunctions)
+        private static IEnumerable<ValueNodeInfo> ArgumentListNodeInfo(ParseTreeNode node, Variable[] availableVariables, VectorFunction[] availableFunctions)
         {
             ParseTreeNode? nextNode = node;
 
@@ -76,18 +69,15 @@ namespace LibImageProcessing.Helpers
             }
         }
 
-        private static ValueNodeInfo ExpressionNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables, VectorFunction[] availableFunctions)
+        private static ValueNodeInfo ExpressionNodeInfo(ParseTreeNode node, Variable[] availableVariables, VectorFunction[] availableFunctions)
         {
             switch (node.Term.Name)
             {
                 case "number":
-                    return new ValueNodeInfo(node.Token.Text, 1);
-
-                case "identifier":
-                    return IdentifierNodeInfo(node, availableVariables);
+                    return new ValueNodeInfo(node.Token.Text, 1, ColorSpace.RGB, VectorVariable.EnumerateMembersOfVector(ColorSpace.RGB, 1).ToArray());
 
                 case "memberAccess":
-                    return MemberAccessNodeInfo(node, availableVariables);
+                    return MemberAccessNodeInfo(node, availableVariables, availableFunctions);
 
                 case "functionCall":
                     return FunctionCallNodeInfo(node, availableVariables, availableFunctions);
@@ -99,7 +89,7 @@ namespace LibImageProcessing.Helpers
                             return ExpressionNodeInfo(node.ChildNodes[0], availableVariables, availableFunctions);
                         case 3:
                             var childInfo = ExpressionNodeInfo(node.ChildNodes[1], availableVariables, availableFunctions);
-                            return new ValueNodeInfo($"({childInfo.Text})", childInfo.Components);
+                            return new ValueNodeInfo($"({childInfo.Text})", childInfo.Components, ColorSpace.RGB, childInfo.Members);
                         default:
                             throw new InvalidOperationException();
                     }
@@ -119,7 +109,7 @@ namespace LibImageProcessing.Helpers
                             }
 
                             var op = node.ChildNodes[1].Token.Text;
-                            return new ValueNodeInfo($"{childInfo1.Text} {op} {childInfo2.Text}", childInfo1.Components * childInfo2.Components);
+                            return new ValueNodeInfo($"{childInfo1.Text} {op} {childInfo2.Text}", childInfo1.Components * childInfo2.Components, ColorSpace.RGB, childInfo2.Members);
                         default:
                             throw new InvalidOperationException();
                     }
@@ -138,7 +128,7 @@ namespace LibImageProcessing.Helpers
                             }
 
                             var op = node.ChildNodes[1].Token.Text;
-                            return new ValueNodeInfo($"{childInfo1.Text} {op} {childInfo2.Text}", childInfo1.Components);
+                            return new ValueNodeInfo($"{childInfo1.Text} {op} {childInfo2.Text}", childInfo1.Components, ColorSpace.RGB, childInfo1.Members);
                         default:
                             throw new InvalidOperationException();
                     }
@@ -148,71 +138,50 @@ namespace LibImageProcessing.Helpers
             }
         }
 
-        private static ValueNodeInfo IdentifierNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables)
+        private static ValueNodeInfo MemberAccessNodeInfo(ParseTreeNode node, Variable[] availableVariables, VectorFunction[] availableFunctions)
         {
-            var identifier = node.Token.Text;
-            foreach (var variable in availableVariables)
+            if (node.ChildNodes is [var identifier])
             {
-                if (variable.Name == identifier)
-                {
-                    return new ValueNodeInfo(variable.NameInShader, variable.Components);
-                }
+                var identifierVariable = availableVariables.FirstOrDefault(v => v.Name == identifier.Token.Text)
+                    ?? throw new ArgumentException($"No variable like '{identifier.Token.Text}'");
+
+                availableVariables = identifierVariable.Members.ToArray();
+                return identifierVariable.Resolve(null);
             }
-
-            throw new ArgumentException($"No variable like '{identifier}'");
-        }
-
-        private static ValueNodeInfo MemberAccessNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables)
-        {
-            List<string> accessSequence = new List<string>();
-
-            ParseTreeNode? nextNode = node;
-            while (nextNode is not null)
+            else if (node.ChildNodes is [var memberAccess, _, var identifierToAccess])
             {
-                switch (nextNode.ChildNodes)
+                var parent = MemberAccessNodeInfo(memberAccess, availableVariables, availableFunctions);
+
+                if (parent.Members.FirstOrDefault(v => v.Name == identifierToAccess.Token.Text) is { } matchedVariable)
                 {
-                    case [var identifier]:
-                        accessSequence.Add(identifier.Token.Text);
-                        nextNode = null;
-                        break;
-                    case [var memberAccess, _, var identifier]:
-                        accessSequence.Add(identifier.Token.Text);
-                        nextNode = memberAccess;
-                        break;
-                    default:
-                        throw new InvalidOperationException();
+                    availableVariables = matchedVariable.Members.ToArray();
+                    return matchedVariable.Resolve(parent);
                 }
-            }
-
-            var components = 0;
-            IEnumerable<VectorVariable> currentVariables = availableVariables;
-            List<string> shaderAccessSequence = new List<string>();
-            for (int i = accessSequence.Count - 1; i >= 0; i--)
-            {
-                bool matched = false;
-                foreach (var variable in currentVariables)
+                else if (availableFunctions.FirstOrDefault(f => f.Name == identifierToAccess.Token.Text) is { } matchedFunction)
                 {
-                    if (variable.Name == accessSequence[i])
+                    if (matchedFunction.Overrides
+                        .FirstOrDefault(ovrd => ovrd.ArgumentComponents.Count == 1 && ovrd.ArgumentComponents[0] == parent.Components)
+                        is { } matchedOverride)
                     {
-                        shaderAccessSequence.Add(variable.NameInShader);
-                        currentVariables = variable.Members;
-                        components = variable.Components;
-                        matched = true;
-                        break;
+                        var colorSpace = matchedFunction.ReturningColorSpace ?? parent.ColorSpace;
+                        var members = VectorVariable.EnumerateMembersOfVector(colorSpace, 1).ToArray();
+                        return new ValueNodeInfo($"{matchedFunction.Name}({parent.Text})", matchedOverride.ReturnComponents, colorSpace, members);
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"Function '{identifierToAccess.Token.Text}' no override accepts {parent.Components} components");
                     }
                 }
-
-                if (!matched)
+                else
                 {
-                    throw new ArgumentException($"No variable like '{accessSequence[i]}'");
+                    throw new ArgumentException($"No variable or function like '{identifierToAccess.Token.Text}'");
                 }
             }
 
-            var shaderCode = string.Join('.', shaderAccessSequence);
-            return new ValueNodeInfo(shaderCode, components);
+            throw new InvalidOperationException("Invalid node");
         }
 
-        private static ValueNodeInfo FunctionCallNodeInfo(ParseTreeNode node, VectorVariable[] availableVariables, VectorFunction[] availableFunctions)
+        private static ValueNodeInfo FunctionCallNodeInfo(ParseTreeNode node, Variable[] availableVariables, VectorFunction[] availableFunctions)
         {
             switch (node.ChildNodes)
             {
@@ -240,7 +209,9 @@ namespace LibImageProcessing.Helpers
                             }
                         }
 
-                        return new ValueNodeInfo($"{identifierText}({string.Join(", ", argumentListNodeInfos.Select(nodeInfo => nodeInfo.Text))})", funcOverride.ReturnComponents);
+                        var returnColorSpace = matchedFunc.ReturningColorSpace ?? argumentListNodeInfos.First().ColorSpace;
+                        var members = VectorVariable.EnumerateMembersOfVector(returnColorSpace, funcOverride.ReturnComponents).ToArray();
+                        return new ValueNodeInfo($"{identifierText}({string.Join(", ", argumentListNodeInfos.Select(nodeInfo => nodeInfo.Text))})", funcOverride.ReturnComponents, returnColorSpace, members);
                     }
 
                     throw new ArgumentException($"No matched override of function '{identifierText}'.");
@@ -307,17 +278,11 @@ namespace LibImageProcessing.Helpers
             }
         }
 
-        public static string GetShaderExpressionForFilter(string expression, ShaderExpressionDefaultComponentResolver defaultComponentResolver)
+        public static string GetShaderExpressionForSourceExpr(string expression, string[] sources, ShaderExpressionDefaultComponentResolver defaultComponentResolver)
         {
-            VectorVariable[] vectorVariables =
-            [
-                new VectorVariable("rgb", "rgb", 3, ['r', 'g', 'b']),
-                new VectorVariable("rgba", "rgba", 4, ['r', 'g', 'b', 'a']),
-                new VectorVariable("hsv", "hsv", 3, ['h', 's', 'v']),
-                new VectorVariable("hsva", "hsva", 4, ['h', 's', 'v', 'a']),
-                new VectorVariable("hsl", "hsl", 3, ['h', 's', 'l']),
-                new VectorVariable("hsla", "hsla", 4, ['h', 's', 'l', 'a']),
-            ];
+            VectorVariable[] vectorVariables = sources
+                .Select((source, i) => new VectorVariable(source, $"sources[{i}]", ColorSpace.RGB))
+                .ToArray();
 
             VectorFunction[] vectorFunctions =
             [
@@ -432,51 +397,78 @@ namespace LibImageProcessing.Helpers
                     new VectorFunctionOverride(3, [3, 3, 3]),
                     new VectorFunctionOverride(4, [4, 4, 4]),
                 ]),
+
+                new VectorFunction("color", "color", [
+                    new VectorFunctionOverride(4, [1]),
+                    new VectorFunctionOverride(4, [2]),
+                    new VectorFunctionOverride(4, [3]),
+                    new VectorFunctionOverride(4, [4]),
+                ]),
+
+                new VectorFunction("lum", "lum", [
+                    new VectorFunctionOverride(1, [1]),
+                    new VectorFunctionOverride(1, [2]),
+                    new VectorFunctionOverride(1, [3]),
+                    new VectorFunctionOverride(1, [4]),
+                ]),
             ];
 
             return GetShaderExpression(expression, vectorVariables, vectorFunctions, defaultComponentResolver);
         }
 
-        public static string GetShaderExpressionForRgbFilter(string expression)
+        public static string GetShaderExpressionForSourceExpr(string expression, string[] sources)
         {
-            return GetShaderExpressionForFilter(expression, (componentsExists, requiredComponentIndex) =>
+            ShaderExpressionDefaultComponentResolver resolver = (componentsExists, requiredComponentIndex) =>
             {
-                if (componentsExists.Length == 1 &&
-                    componentsExists[0].Components == 1)
+                if (componentsExists.Length == 0)
                 {
-                    return componentsExists[0].Text;
+                    if (requiredComponentIndex == 3)
+                    {
+                        return "1";
+                    }
+
+                    return "0";
                 }
 
-                return "1";
-            });
-        }
+                var colorSpace = componentsExists[0].ColorSpace;
 
-        public static string GetShaderExpressionForHsvFilter(string expression)
-        {
-            return GetShaderExpressionForFilter(expression, (componentsExists, requiredComponentIndex) =>
-            {
-                return requiredComponentIndex switch
+                if (colorSpace == ColorSpace.RGB)
                 {
-                    1 => "1",
-                    2 => "1",
-                    3 => "1",
-                    _ => "0"
-                };
-            });
-        }
+                    if (componentsExists.Length == 1 &&
+                        componentsExists[0].Components == 1)
+                    {
+                        return componentsExists[0].Text;
+                    }
 
-        public static string GetShaderExpressionForHslFilter(string expression)
-        {
-            return GetShaderExpressionForFilter(expression, (componentsExists, requiredComponentIndex) =>
-            {
-                return requiredComponentIndex switch
+                    return "1";
+                }
+                else if (colorSpace == ColorSpace.HSV)
                 {
-                    1 => "1",
-                    2 => "0.5",
-                    3 => "1",
-                    _ => "0"
-                };
-            });
+                    return requiredComponentIndex switch
+                    {
+                        1 => "1",
+                        2 => "1",
+                        3 => "1",
+                        _ => "0"
+                    };
+                }
+                else if (colorSpace == ColorSpace.HSL)
+                {
+                    return requiredComponentIndex switch
+                    {
+                        1 => "1",
+                        2 => "0.5",
+                        3 => "1",
+                        _ => "0"
+                    };
+                }
+                else
+                {
+                    return "0.5";
+                }
+            };
+
+            return GetShaderExpressionForSourceExpr(expression, sources, resolver);
         }
     }
 }

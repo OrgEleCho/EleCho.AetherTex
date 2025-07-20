@@ -12,8 +12,8 @@ namespace EleCho.MegaTextures
 {
     public sealed unsafe partial class MegaTexture
     {
-        const int TileMaxWidth = 4096;
-        const int TileMaxHeight = 4096;
+        const int TileMaxWidth = 8192;
+        const int TileMaxHeight = 8192;
 
         private string[] _sources;
         private ExprSource? _defaultSource;
