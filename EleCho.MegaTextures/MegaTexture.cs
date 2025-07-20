@@ -78,12 +78,12 @@ namespace EleCho.MegaTextures
                 Height = (uint)tileHeight,
                 ArraySize = (uint)(rows * columns),
                 BindFlags = (uint)BindFlag.ShaderResource,
-                CPUAccessFlags = (uint)CpuAccessFlag.Write,
+                CPUAccessFlags = 0,
                 Format = format.ToDxFormat(),
                 MipLevels = 1,
                 MiscFlags = 0,
                 SampleDesc = new SampleDesc(1, 0),
-                Usage = Usage.Dynamic,
+                Usage = Usage.Default,
             };
 
             _vertexBufferDesc = new BufferDesc()
@@ -145,6 +145,21 @@ namespace EleCho.MegaTextures
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="tileWidth"></param>
+        /// <param name="tileHeight"></param>
+        /// <param name="rows"></param>
+        /// <param name="columns"></param>
+        public MegaTexture(
+            TextureFormat format, int tileWidth, int tileHeight, int rows, int columns)
+            : this(format, tileWidth, tileHeight, rows, columns, ["color"])
+        {
+
         }
 
         /// <summary>
@@ -287,21 +302,8 @@ namespace EleCho.MegaTextures
             var texture = _textures[sourceIndex];
             var subResource = (uint)(row * Columns + column);
 
-            MappedSubresource mappedSubResource = default;
-            _deviceContext.Map(texture, subResource, Map.WriteDiscard, 0, ref mappedSubResource);
-
-            var rowsToCopy = Math.Min(data.Height, TileHeight);
-            var rowBytesToCopy = Math.Min(mappedSubResource.RowPitch, data.RowBytes);
-
-            for (int y = 0; y < rowsToCopy; y++)
-            {
-                NativeMemory.Copy(
-                    (void*)(data.BaseAddress + data.RowBytes * y),
-                    (void*)((nint)mappedSubResource.PData + mappedSubResource.RowPitch * y),
-                    (nuint)rowBytesToCopy);
-            }
-
-            _deviceContext.Unmap(texture, subResource);
+            var box = new Box(0, 0, 0, (uint)data.Width, (uint)data.Height, 1);
+            _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)(data.RowBytes * data.Height));
         }
 
         public void Write(TextureData data, string source, int column, int row)

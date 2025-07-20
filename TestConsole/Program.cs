@@ -16,14 +16,17 @@ internal class Program
     {
         var bitmap = SKBitmap.Decode("test.jpg");
         var bitmap2 = new SKBitmap(512, 512, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-        var megaTexture = new MegaTexture(TextureFormat.Bgra8888, 1024, 1024);
+        var megaTexture = new MegaTexture(TextureFormat.Bgra8888, 1024, 1024, 2, 2);
         megaTexture.Write(GetTextureData(bitmap), 0, 0);
+        megaTexture.Write(GetTextureData(bitmap), 1, 0);
+        megaTexture.Write(GetTextureData(bitmap), 0, 1);
+        megaTexture.Write(GetTextureData(bitmap), 1, 1);
 
         var quad = new QuadVectors(
-            new Vector2(512, 0),
-            new Vector2(512, 512),
-            new Vector2(0, 512),
-            new Vector2(0, 0));
+            new Vector2(0, 0),
+            new Vector2(2048, 0),
+            new Vector2(2048, 2048),
+            new Vector2(0, 2048));
 
         using var output = File.Create("output.png");
         var source = megaTexture.CreateSource("color.bgr");
