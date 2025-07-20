@@ -45,7 +45,8 @@ namespace EleCho.MegaTextures.Utilities
         public static ComPtr<ID3D11Texture2D> CreateTexture2D(ComPtr<ID3D11Device> device, in SubresourceData initialData, in Texture2DDesc desc)
         {
             ComPtr<ID3D11Texture2D> texture = default;
-            device.CreateTexture2D(in desc, in initialData, ref texture);
+            var hr = device.CreateTexture2D(in desc, in initialData, ref texture);
+            SilkMarshal.ThrowHResult(hr);
 
             return texture;
         }
@@ -195,7 +196,8 @@ namespace EleCho.MegaTextures.Utilities
         public static unsafe ComPtr<ID3D11VertexShader> CreateVertexShader(ComPtr<ID3D11Device> device, ComPtr<ID3D10Blob> shaderBlob, ComPtr<ID3D11ClassLinkage> classLinkage)
         {
             ComPtr<ID3D11VertexShader> shader = default;
-            device.CreateVertexShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
+            var hr = device.CreateVertexShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
+            SilkMarshal.ThrowHResult(hr);
 
             return shader;
         }
@@ -203,7 +205,8 @@ namespace EleCho.MegaTextures.Utilities
         public static unsafe ComPtr<ID3D11PixelShader> CreatePixelShader(ComPtr<ID3D11Device> device, ComPtr<ID3D10Blob> shaderBlob, ComPtr<ID3D11ClassLinkage> classLinkage)
         {
             ComPtr<ID3D11PixelShader> shader = default;
-            device.CreatePixelShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
+            var hr = device.CreatePixelShader(shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), classLinkage, ref shader);
+            SilkMarshal.ThrowHResult(hr);
 
             return shader;
         }
@@ -217,7 +220,9 @@ namespace EleCho.MegaTextures.Utilities
         public static unsafe ComPtr<ID3D11InputLayout> CreateInputLayout(ComPtr<ID3D11Device> device, ComPtr<ID3D10Blob> shaderBlob, ReadOnlySpan<InputElementDesc> inputElements)
         {
             ComPtr<ID3D11InputLayout> inputLayout = default;
-            device.CreateInputLayout(in inputElements[0], (uint)inputElements.Length, shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), ref inputLayout);
+            var hr = device.CreateInputLayout(in inputElements[0], (uint)inputElements.Length, shaderBlob.GetBufferPointer(), shaderBlob.GetBufferSize(), ref inputLayout);
+            SilkMarshal.ThrowHResult(hr);
+
             return inputLayout;
         }
     }

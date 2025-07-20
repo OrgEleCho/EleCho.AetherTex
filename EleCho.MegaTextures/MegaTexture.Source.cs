@@ -22,6 +22,10 @@ namespace EleCho.MegaTextures
                     new Dictionary<string, string>()
                     {
                         ["SourceCount"] = owner._sources.Length.ToString(),
+                        ["TileWidth"] = owner.TileWidth.ToString(),
+                        ["TileHeight"] = owner.TileHeight.ToString(),
+                        ["TileRows"] = owner.Rows.ToString(),
+                        ["TileColumns"] = owner.Columns.ToString(),
                     });
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);

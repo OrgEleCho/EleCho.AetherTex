@@ -28,9 +28,12 @@ namespace EleCho.MegaTextures
         private ComPtr<ID3D11DeviceContext> _deviceContext;
         private ComPtr<ID3D11Texture2D>[] _textures;
         private ComPtr<ID3D11Buffer> _vertexBuffer;
+        private ComPtr<ID3D11Buffer> _indexBuffer;
         private ComPtr<ID3D10Blob> _vertexShaderBlob;
         private ComPtr<ID3D11VertexShader> _vertexShader;
         private ComPtr<ID3D11InputLayout> _inputLayout;
+
+        private float[] _background = [1, 0, 0, 1];
 
         public TextureFormat Format { get; }
         public int TileWidth { get; }
@@ -86,7 +89,7 @@ namespace EleCho.MegaTextures
             _vertexBufferDesc = new BufferDesc()
             {
                 BindFlags = (uint)BindFlag.VertexBuffer,
-                ByteWidth = sizeof(float) * 5 * 4,
+                ByteWidth = (uint)(sizeof(InputVertex) * 4),
                 CPUAccessFlags = (uint)CpuAccessFlag.Write,
                 MiscFlags = 0,
                 Usage = Usage.Dynamic
@@ -285,7 +288,7 @@ namespace EleCho.MegaTextures
             var subResource = (uint)(row * Columns + column);
 
             MappedSubresource mappedSubResource = default;
-            _deviceContext.Map(texture, subResource, Map.Write, 0, ref mappedSubResource);
+            _deviceContext.Map(texture, subResource, Map.WriteDiscard, 0, ref mappedSubResource);
 
             var rowsToCopy = Math.Min(data.Height, TileHeight);
             var rowBytesToCopy = Math.Min(mappedSubResource.RowPitch, data.RowBytes);
@@ -293,8 +296,8 @@ namespace EleCho.MegaTextures
             for (int y = 0; y < rowsToCopy; y++)
             {
                 NativeMemory.Copy(
-                    (void*)((nint)mappedSubResource.PData + mappedSubResource.RowPitch * y),
                     (void*)(data.BaseAddress + data.RowBytes * y),
+                    (void*)((nint)mappedSubResource.PData + mappedSubResource.RowPitch * y),
                     (nuint)rowBytesToCopy);
             }
 

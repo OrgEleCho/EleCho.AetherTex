@@ -7,11 +7,11 @@
 #endif
 
 #ifndef TileWidth
-#define TileWidth 1000
+#define TileWidth 100
 #endif
 
 #ifndef TileHeight
-#define TileHeight 1000
+#define TileHeight 100
 #endif
 
 #ifndef TileRows
@@ -34,7 +34,7 @@ struct vs_in
 struct vs_out
 {
     float4 position : SV_Position;
-    float2 texcorrd : MT_TEXCOORD;
+    float2 texcoord : MT_TEXCOORD;
 };
 
 float4 sample_source(int sourceIndex, float2 texcoord)
@@ -46,7 +46,7 @@ float4 sample_source(int sourceIndex, float2 texcoord)
     float tileXStart = TileWidth * tileX;
     float tileYStart = TileHeight * tileY;
     float xInTile = texcoord.x - tileXStart;
-    float yInTile = texcoord.x - tileYStart;
+    float yInTile = texcoord.y - tileYStart;
     float uInTile = xInTile / TileWidth;
     float vInTile = yInTile / TileHeight;
     
@@ -57,7 +57,7 @@ vs_out vs_main(vs_in input)
 {
     vs_out output =
     {
-        float4(input.position, 0.0, 1.0),
+        float4(input.position, 0.5, 1.0),
         input.texcoord,
     };
 
@@ -66,14 +66,12 @@ vs_out vs_main(vs_in input)
 
 float4 ps_main(vs_out input) : SV_TARGET
 {
-    return float4(1, 0, 0, 1); // Placeholder for debugging
-    
     float4 sources[SourceCount];
     
     [unroll]
     for (int i = 0; i < SourceCount; i++)
     {
-        sources[i] = sample_source(i, input.texcorrd);
+        sources[i] = sample_source(i, input.texcoord);
     }
 
     float4 result = SourceExpr;

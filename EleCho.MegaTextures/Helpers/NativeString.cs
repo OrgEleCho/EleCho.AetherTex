@@ -26,7 +26,7 @@ namespace EleCho.MegaTextures.Helpers
 
             fixed (byte* pBytes = bytes)
             {
-                //NativeMemory.Copy(pBytes, nativeMem, (nuint)bytes.Length);
+                NativeMemory.Copy(pBytes, nativeMem, (nuint)bytes.Length);
             }
 
             return (nint)nativeMem;

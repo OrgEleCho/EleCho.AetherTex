@@ -21,13 +21,12 @@ internal class Program
 
         var quad = new QuadVectors(
             new Vector2(0, 0),
-            new Vector2(100, 0),
-            new Vector2(100, 100),
-            new Vector2(0, 100));
-
-        megaTexture.Read(megaTexture.DefaultSource, quad, GetTextureData(bitmap));
+            new Vector2(512, 0),
+            new Vector2(512, 512),
+            new Vector2(0, 512));
 
         using var output = File.Create("output.png");
+        megaTexture.Read(megaTexture.DefaultSource, quad, GetTextureData(bitmap2));
         bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
 
         Console.WriteLine("Hello, World!");
