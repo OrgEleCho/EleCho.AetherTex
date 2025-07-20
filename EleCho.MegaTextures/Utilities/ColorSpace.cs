@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EleCho.AetherTex.Utilities
 {
-    public enum ColorSpace
+    internal enum ColorSpace
     {
         RGB,
         HSV,
