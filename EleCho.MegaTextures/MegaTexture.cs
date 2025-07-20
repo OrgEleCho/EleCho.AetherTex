@@ -10,7 +10,7 @@ using Silk.NET.DXGI;
 
 namespace EleCho.MegaTextures
 {
-    public sealed unsafe partial class MegaTexture
+    public sealed unsafe partial class MegaTexture : IDisposable
     {
         const int TileMaxWidth = 8192;
         const int TileMaxHeight = 8192;
@@ -29,13 +29,13 @@ namespace EleCho.MegaTextures
         private ComPtr<ID3D11Texture2D>[] _textures;
         private ComPtr<ID3D11ShaderResourceView>[] _textureViews;
         private ComPtr<ID3D11Buffer> _vertexBuffer;
-        private ComPtr<ID3D11Buffer> _indexBuffer;
         private ComPtr<ID3D10Blob> _vertexShaderBlob;
         private ComPtr<ID3D11VertexShader> _vertexShader;
         private ComPtr<ID3D11InputLayout> _inputLayout;
         private ComPtr<ID3D11SamplerState> _samplerState;
 
         private float[] _background = [0, 0, 0, 0];
+        private bool _disposedValue;
 
         public TextureFormat Format { get; }
         public int TileWidth { get; }
@@ -215,9 +215,12 @@ namespace EleCho.MegaTextures
 
         }
 
-        public ExprSource CreateSource(string expression)
+        private void EnsureNotDisposed()
         {
-            return new ExprSource(this, expression);
+            if (_disposedValue)
+            {
+                throw new InvalidOperationException("Object disposed");
+            }
         }
 
         private void UpdateVertices(QuadVectors quad)
@@ -285,8 +288,17 @@ namespace EleCho.MegaTextures
             renderTargetView.Dispose();
         }
 
+        public ExprSource CreateSource(string expression)
+        {
+            EnsureNotDisposed();
+
+            return new ExprSource(this, expression);
+        }
+
         public void Read(ExprSource source, QuadVectors quad, TextureData buffer)
         {
+            EnsureNotDisposed();
+
             UpdateVertices(quad);
             Render(source, buffer);
         }
@@ -296,6 +308,8 @@ namespace EleCho.MegaTextures
 
         public void Write(TextureData data, int sourceIndex, int column, int row)
         {
+            EnsureNotDisposed();
+
             if (sourceIndex < 0 ||
                 sourceIndex >= _textures.Length)
             {
@@ -311,6 +325,8 @@ namespace EleCho.MegaTextures
 
         public void Write(TextureData data, string source, int column, int row)
         {
+            EnsureNotDisposed();
+
             var sourceIndex = Array.IndexOf(_sources, source);
             if (sourceIndex == -1)
             {
@@ -322,5 +338,43 @@ namespace EleCho.MegaTextures
 
         public void Write(TextureData data, int column, int row)
             => Write(data, _sources[0], column, row);
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: 释放托管状态(托管对象)
+                }
+
+                _deviceContext.Dispose();
+                _samplerState.Dispose();
+                _inputLayout.Dispose();
+                _vertexShader.Dispose();
+                _vertexShaderBlob.Dispose();
+                _vertexBuffer.Dispose();
+
+                for (int i = 0; i < _textures.Length; i++)
+                {
+                    _textureViews[i].Dispose();
+                    _textures[i].Dispose();
+                }
+
+                _device.Dispose();
+                _disposedValue = true;
+            }
+        }
+
+        ~MegaTexture()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
