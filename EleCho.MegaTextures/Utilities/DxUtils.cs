@@ -225,5 +225,14 @@ namespace EleCho.MegaTextures.Utilities
 
             return inputLayout;
         }
+
+        public static unsafe ComPtr<ID3D11SamplerState> CreateSamplerState(ComPtr<ID3D11Device> device, in SamplerDesc desc)
+        {
+            ComPtr<ID3D11SamplerState> samplerState = default;
+            var hr = device.CreateSamplerState(in desc, ref samplerState);
+            SilkMarshal.ThrowHResult(hr);
+
+            return samplerState;
+        }
     }
 }

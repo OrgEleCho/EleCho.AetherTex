@@ -27,13 +27,15 @@ namespace EleCho.MegaTextures
         private ComPtr<ID3D11Device> _device;
         private ComPtr<ID3D11DeviceContext> _deviceContext;
         private ComPtr<ID3D11Texture2D>[] _textures;
+        private ComPtr<ID3D11ShaderResourceView>[] _textureViews;
         private ComPtr<ID3D11Buffer> _vertexBuffer;
         private ComPtr<ID3D11Buffer> _indexBuffer;
         private ComPtr<ID3D10Blob> _vertexShaderBlob;
         private ComPtr<ID3D11VertexShader> _vertexShader;
         private ComPtr<ID3D11InputLayout> _inputLayout;
+        private ComPtr<ID3D11SamplerState> _samplerState;
 
-        private float[] _background = [1, 0, 0, 1];
+        private float[] _background = [0, 0, 0, 0];
 
         public TextureFormat Format { get; }
         public int TileWidth { get; }
@@ -95,6 +97,15 @@ namespace EleCho.MegaTextures
                 Usage = Usage.Dynamic
             };
 
+            ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc
+            {
+                Format = _texture2DDesc.Format,
+                ViewDimension = D3DSrvDimension.D3D11SrvDimensionTexture2D,
+            };
+
+            inputTextureShaderResourceViewDesc.Texture2D.MipLevels = 1;
+            inputTextureShaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+
             _api = D3D11.GetApi(null, false);
             _compiler = D3DCompiler.GetApi();
 
@@ -105,9 +116,12 @@ namespace EleCho.MegaTextures
             }
 
             _textures = new ComPtr<ID3D11Texture2D>[_sources.Length];
+            _textureViews = new ComPtr<ID3D11ShaderResourceView>[_sources.Length];
+
             for (int i = 0; i < _sources.Length; i++)
             {
                 _textures[i] = DxUtils.CreateTexture2D(_device, _texture2DDesc);
+                _device.CreateShaderResourceView(_textures[i], in inputTextureShaderResourceViewDesc, ref _textureViews[i]);
             }
 
             _vertexBuffer = DxUtils.CreateBuffer(_device, _vertexBufferDesc);
@@ -145,6 +159,13 @@ namespace EleCho.MegaTextures
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
+            _samplerState = DxUtils.CreateSamplerState(_device, new SamplerDesc
+            {
+                Filter = Filter.MinMagMipPoint,
+                AddressU = TextureAddressMode.Clamp,
+                AddressV = TextureAddressMode.Clamp,
+                AddressW = TextureAddressMode.Clamp,
+            });
         }
 
         /// <summary>
@@ -216,32 +237,6 @@ namespace EleCho.MegaTextures
 
         private void Render(ExprSource source, TextureData buffer)
         {
-            ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc
-            {
-                Format = _texture2DDesc.Format,
-                ViewDimension = D3DSrvDimension.D3D11SrvDimensionTexture2D,
-            };
-
-            inputTextureShaderResourceViewDesc.Texture2D.MipLevels = 1;
-            inputTextureShaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-
-            ComPtr<ID3D11ShaderResourceView>[] inputTextureShaderResourceViews = new ComPtr<ID3D11ShaderResourceView>[_textures.Length];
-            for (int i = 0; i < _textures.Length; i++)
-            {
-                _device.CreateShaderResourceView(_textures[i], in inputTextureShaderResourceViewDesc, ref inputTextureShaderResourceViews[i]);
-            }
-
-            SamplerDesc samplerDesc = new SamplerDesc
-            {
-                Filter = Filter.MinMagMipPoint,
-                AddressU = TextureAddressMode.Clamp,
-                AddressV = TextureAddressMode.Clamp,
-                AddressW = TextureAddressMode.Clamp,
-            };
-
-            ComPtr<ID3D11SamplerState> samplerState = default;
-            _device.CreateSamplerState(in samplerDesc, ref samplerState);
-
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
 
             using var renderTargetTexture = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
@@ -260,6 +255,9 @@ namespace EleCho.MegaTextures
 
             var renderTargetView = DxUtils.CreateRenderTargetView(_device, renderTargetTexture, in Unsafe.NullRef<RenderTargetViewDesc>());
 
+            // clear as transparent
+            _deviceContext.ClearRenderTargetView(renderTargetView, ref _background[0]);
+
             _deviceContext.RSSetViewports(1, in viewport);
             _deviceContext.OMSetRenderTargets(1, ref renderTargetView, ref Unsafe.NullRef<ID3D11DepthStencilView>());
 
@@ -272,8 +270,8 @@ namespace EleCho.MegaTextures
             _deviceContext.IASetPrimitiveTopology(D3DPrimitiveTopology.D3DPrimitiveTopologyTrianglestrip);
             _deviceContext.IASetInputLayout(_inputLayout);
 
-            _deviceContext.PSSetShaderResources(0, (uint)inputTextureShaderResourceViews.Length, ref inputTextureShaderResourceViews[0]);
-            _deviceContext.PSSetSamplers(0, 1, ref samplerState);
+            _deviceContext.PSSetShaderResources(0, (uint)_textureViews.Length, ref _textureViews[0]);
+            _deviceContext.PSSetSamplers(0, 1, ref _samplerState);
 
             _deviceContext.Draw(4, 0);
 
