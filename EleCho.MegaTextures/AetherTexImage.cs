@@ -247,7 +247,7 @@ namespace EleCho.AetherTex
 
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
 
-            using var renderTargetTexture = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
+            var renderTargetTexture = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
             {
                 Width = (uint)buffer.Width,
                 Height = (uint)buffer.Height,
@@ -286,6 +286,7 @@ namespace EleCho.AetherTex
             DxUtils.CopyTexture(_device, _deviceContext, renderTargetTexture, 0, buffer);
 
             renderTargetView.Dispose();
+            renderTargetTexture.Dispose();
         }
 
         public ExprSource CreateSource(string expression)
@@ -319,7 +320,7 @@ namespace EleCho.AetherTex
             var texture = _textures[sourceIndex];
             var subResource = (uint)(row * Columns + column);
 
-            var box = new Box(0, 0, 0, (uint)data.Width, (uint)data.Height, 1);
+            var box = new Box(0, 0, 0, (uint)Math.Min(TileWidth, data.Width), (uint)Math.Min(TileHeight, data.Height), 1);
             _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)(data.RowBytes * data.Height));
         }
 

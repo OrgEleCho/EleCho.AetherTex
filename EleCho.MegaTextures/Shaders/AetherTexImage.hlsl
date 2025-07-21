@@ -454,6 +454,10 @@ float4 mul_rgb_to_a(float4 v)
 
 float4 sample_source(int sourceIndex, float2 texcoord)
 {
+    float uGlobal = texcoord.x / TileWidth / TileColumns;
+    float vGlobal = texcoord.y / TileHeight / TileRows;
+    clip(float4(uGlobal, vGlobal, 1 - uGlobal, 1 - vGlobal));
+    
     int tileX = ((int) texcoord.x) / TileWidth;
     int tileY = ((int) texcoord.y) / TileHeight;
     int tileIndex = tileY * TileColumns + tileX;
