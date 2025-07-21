@@ -16,8 +16,8 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.Bgra8888 => Format.FormatB8G8R8A8Unorm,
                 TextureFormat.Rgba8888 => Format.FormatR8G8B8A8Unorm,
 
-                TextureFormat.UInt8 => Format.FormatR8Uint,
-                TextureFormat.UInt16 => Format.FormatR16Uint,
+                TextureFormat.UInt8 => Format.FormatR8Unorm,
+                TextureFormat.UInt16 => Format.FormatR16Unorm,
                 TextureFormat.Float32 => Format.FormatR32Float,
 
                 _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported texture format")
