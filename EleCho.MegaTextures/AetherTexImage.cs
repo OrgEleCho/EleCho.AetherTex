@@ -24,6 +24,7 @@ namespace EleCho.AetherTex
 
         private Texture2DDesc _texture2DDesc;
         private BufferDesc _vertexBufferDesc;
+        private SamplerDesc _samplerDesc;
 
         private ComPtr<ID3D11Device> _device;
         private ComPtr<ID3D11DeviceContext> _deviceContext;
@@ -176,13 +177,6 @@ namespace EleCho.AetherTex
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
-            _samplerState = DxUtils.CreateSamplerState(_device, new SamplerDesc
-            {
-                Filter = Filter.MinMagMipPoint,
-                AddressU = TextureAddressMode.Clamp,
-                AddressV = TextureAddressMode.Clamp,
-                AddressW = TextureAddressMode.Clamp,
-            });
         }
 
         /// <summary>
@@ -240,6 +234,13 @@ namespace EleCho.AetherTex
             }
         }
 
+        private Filter GetSamplerFilter()
+        {
+            return Options.UsePointSampling ?
+                Filter.MinMagMipPoint :
+                Filter.MinMagMipLinear;
+        }
+
         private void UpdateVertices(QuadVectors quad)
         {
             MappedSubresource mappedSubResource = default;
@@ -263,6 +264,13 @@ namespace EleCho.AetherTex
             }
 
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
+            var samplerFilter = GetSamplerFilter();
+
+            if (_samplerDesc.Filter != samplerFilter)
+            {
+                _samplerState.Dispose();
+                _samplerState = default;
+            }
 
             if (buffer.Width != _lastRenderWidth ||
                 buffer.Height != _lastRenderHeight)
@@ -272,6 +280,19 @@ namespace EleCho.AetherTex
 
                 _renderTarget.Dispose();
                 _renderTarget = default;
+            }
+
+            if (_samplerState.Handle is null)
+            {
+                _samplerDesc = new SamplerDesc
+                {
+                    Filter = samplerFilter,
+                    AddressU = TextureAddressMode.Clamp,
+                    AddressV = TextureAddressMode.Clamp,
+                    AddressW = TextureAddressMode.Clamp,
+                };
+
+                _samplerState = DxUtils.CreateSamplerState(_device, _samplerDesc);
             }
 
             if (_renderTarget.Handle is null)
