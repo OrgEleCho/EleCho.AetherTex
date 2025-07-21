@@ -205,7 +205,7 @@ namespace EleCho.AetherTex.Utilities
                             var currentArgumentComponent = funcOverride.ArgumentComponents[i];
                             if (currentArgumentComponent != argumentListNodeInfos[i].Components)
                             {
-                                throw new ArgumentException($"Function '{identifierText}' with {argumentListNodeInfos.Length} arguments override, argument index {i}, component count not match, required: {currentArgumentComponent}, actual: {argumentListNodeInfos[i].Components}");
+                                continue;
                             }
                         }
 
