@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using EleCho.AetherTex.Helpers;
 using EleCho.AetherTex.Internal;
@@ -50,6 +51,7 @@ namespace EleCho.AetherTex
 
         public ExprSource DefaultSource
             => _defaultSource ??= new ExprSource(this, _sources[0]);
+        public QuadVectors FullQuad { get; }
 
         /// <summary>
         /// 
@@ -73,6 +75,11 @@ namespace EleCho.AetherTex
             Rows = rows;
             Columns = columns;
             Sources = _sources.AsReadOnly();
+            FullQuad = new QuadVectors(
+                new Vector2(0, 0),
+                new Vector2(Width, 0),
+                new Vector2(Width, Height),
+                new Vector2(0, Height));
 
             _texture2DDesc = new Texture2DDesc()
             {
