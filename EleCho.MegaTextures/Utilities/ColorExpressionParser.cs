@@ -434,7 +434,12 @@ namespace EleCho.AetherTex.Utilities
 
                 if (colorSpace == ColorSpace.RGB)
                 {
-                    if (componentsExists.Length == 1 &&
+                    if (requiredComponentIndex == 3)
+                    {
+                        return "1";
+                    }
+
+                    if (componentsExists.Length >= 1 &&
                         componentsExists[0].Components == 1)
                     {
                         return componentsExists[0].Text;
