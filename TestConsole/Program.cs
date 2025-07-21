@@ -33,12 +33,18 @@ internal class Program
         var source = megaTexture.CreateSource("color.bgr");
         megaTexture.Read(source, quad, GetTextureData(bitmap2));
         bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
-
     }
 
     static void TestSpeed()
     {
-        var megaTexture = new AetherTexImage(TextureFormat.Bgra8888, 8192, 8192, 3, 3);
+        var megaTexture = new AetherTexImage(TextureFormat.Bgra8888, 8192, 8192, 3, 3)
+        {
+            Options =
+            {
+                EnableRenderBufferCaching = true
+            }
+        };
+
         var bufferBitmap = new SKBitmap(300, 300, SKColorType.Bgra8888, SKAlphaType.Unpremul);
         var bufferData = GetTextureData(bufferBitmap);
 

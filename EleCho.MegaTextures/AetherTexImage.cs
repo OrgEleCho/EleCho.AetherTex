@@ -35,8 +35,16 @@ namespace EleCho.AetherTex
         private ComPtr<ID3D11InputLayout> _inputLayout;
         private ComPtr<ID3D11SamplerState> _samplerState;
 
+        // rendering cache
+        private int _lastRenderWidth;
+        private int _lastRenderHeight;
+        private ComPtr<ID3D11Texture2D> _renderTarget;
+        private ComPtr<ID3D11RenderTargetView> _renderTargetView;
+
         private float[] _background = [0, 0, 0, 0];
         private bool _disposedValue;
+
+        public AetherTexImageOptions Options { get; }
 
         public TextureFormat Format { get; }
         public int TileWidth { get; }
@@ -51,6 +59,7 @@ namespace EleCho.AetherTex
 
         public ExprSource DefaultSource
             => _defaultSource ??= new ExprSource(this, _sources[0]);
+
         public QuadVectors FullQuad { get; }
 
         /// <summary>
@@ -69,6 +78,7 @@ namespace EleCho.AetherTex
         {
             _sources = sources.ToArray();
 
+            Options = new AetherTexImageOptions(this);
             Format = format;
             TileWidth = tileWidth;
             TileHeight = tileHeight;
@@ -254,27 +264,40 @@ namespace EleCho.AetherTex
 
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
 
-            var renderTargetTexture = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
+            if (buffer.Width != _lastRenderWidth ||
+                buffer.Height != _lastRenderHeight)
             {
-                Width = (uint)buffer.Width,
-                Height = (uint)buffer.Height,
-                ArraySize = 1,
-                BindFlags = (uint)BindFlag.RenderTarget,
-                CPUAccessFlags = 0,
-                Format = buffer.Format.ToDxFormat(),
-                MipLevels = 1,
-                MiscFlags = 0,
-                SampleDesc = new SampleDesc(1, 0),
-                Usage = Usage.Default,
-            });
+                _renderTargetView.Dispose();
+                _renderTargetView = default;
 
-            var renderTargetView = DxUtils.CreateRenderTargetView(_device, renderTargetTexture, in Unsafe.NullRef<RenderTargetViewDesc>());
+                _renderTarget.Dispose();
+                _renderTarget = default;
+            }
+
+            if (_renderTarget.Handle is null)
+            {
+                _renderTarget = DxUtils.CreateTexture2D(_device, new Texture2DDesc()
+                {
+                    Width = (uint)buffer.Width,
+                    Height = (uint)buffer.Height,
+                    ArraySize = 1,
+                    BindFlags = (uint)BindFlag.RenderTarget,
+                    CPUAccessFlags = 0,
+                    Format = buffer.Format.ToDxFormat(),
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                });
+
+                _renderTargetView = DxUtils.CreateRenderTargetView(_device, _renderTarget, in Unsafe.NullRef<RenderTargetViewDesc>());
+            }
 
             // clear as transparent
-            _deviceContext.ClearRenderTargetView(renderTargetView, ref _background[0]);
+            _deviceContext.ClearRenderTargetView(_renderTargetView, ref _background[0]);
 
             _deviceContext.RSSetViewports(1, in viewport);
-            _deviceContext.OMSetRenderTargets(1, ref renderTargetView, ref Unsafe.NullRef<ID3D11DepthStencilView>());
+            _deviceContext.OMSetRenderTargets(1, ref _renderTargetView, ref Unsafe.NullRef<ID3D11DepthStencilView>());
 
             _deviceContext.VSSetShader(_vertexShader, ref Unsafe.NullRef<ComPtr<ID3D11ClassInstance>>(), 0);
             source.ApplyPixelShader(_deviceContext);
@@ -290,13 +313,22 @@ namespace EleCho.AetherTex
 
             _deviceContext.Draw(4, 0);
 
-            DxUtils.CopyTexture(_device, _deviceContext, renderTargetTexture, 0, buffer);
+            DxUtils.CopyTexture(_device, _deviceContext, _renderTarget, 0, buffer);
 
             _deviceContext.Flush();
             _deviceContext.ClearState();
 
-            renderTargetView.Dispose();
-            renderTargetTexture.Dispose();
+            if (!Options.EnableRenderBufferCaching)
+            {
+                _renderTargetView.Dispose();
+                _renderTarget.Dispose();
+
+                _renderTargetView = default;
+                _renderTarget = default;
+            }
+
+            _lastRenderWidth = buffer.Width;
+            _lastRenderHeight = buffer.Height;
         }
 
         public ExprSource CreateSource(string expression)
