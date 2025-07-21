@@ -285,6 +285,9 @@ namespace EleCho.AetherTex
 
             DxUtils.CopyTexture(_device, _deviceContext, renderTargetTexture, 0, buffer);
 
+            _deviceContext.Flush();
+            _deviceContext.ClearState();
+
             renderTargetView.Dispose();
             renderTargetTexture.Dispose();
         }
