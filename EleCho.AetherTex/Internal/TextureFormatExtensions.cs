@@ -23,5 +23,20 @@ namespace EleCho.AetherTex.Internal
                 _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported texture format")
             };
         }
+
+        public static int GetPixelBytes(this TextureFormat format)
+        {
+            return format switch
+            {
+                TextureFormat.Bgra8888 => 4,
+                TextureFormat.Rgba8888 => 4,
+
+                TextureFormat.UInt8 => 1,
+                TextureFormat.UInt16 => 2,
+                TextureFormat.Float32 => 4,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported texture format")
+            };
+        }
     }
 }

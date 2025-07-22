@@ -63,7 +63,7 @@ namespace AetherTex.Viewer.Controls
             private set { SetValue(ErrorMessagePropertyKey, value); }
         }
 
-        private void UpdateOutput()
+        public void UpdateImage()
         {
             ErrorMessage = null;
 
@@ -176,7 +176,7 @@ namespace AetherTex.Viewer.Controls
                 return;
             }
 
-            viewer.UpdateOutput();
+            viewer.UpdateImage();
         }
 
     }

@@ -17,7 +17,7 @@ namespace EleCho.AetherTex
         const int TileMaxWidth = 8192;
         const int TileMaxHeight = 8192;
         const ulong FormatTag = 0x41525458494D4745; // ARTXIMGE
-        const ulong FormatVersion
+        const int CurrentFormatVersion = 1;
 
         private string[] _sources;
         private ExprSource? _defaultSource;
@@ -406,11 +406,63 @@ namespace EleCho.AetherTex
         public void Write(TextureData data, int column, int row)
             => Write(data, _sources[0], column, row);
 
+        private void ReadTile(int sourceIndex, TextureData buffer, int column, int row)
+        {
+            EnsureNotDisposed();
+
+            if (sourceIndex < 0 ||
+                sourceIndex >= _textures.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (column < 0 || column >= Columns ||
+                row < 0 || row >= Rows)
+            {
+                throw new ArgumentOutOfRangeException("Column or row out of range");
+            }
+
+            var texture = _textures[sourceIndex];
+            var subResource = (uint)(row * Columns + column);
+            var box = new Box(0, 0, 0, (uint)Math.Min(TileWidth, buffer.Width), (uint)Math.Min(TileHeight, buffer.Height), 1);
+
+            DxUtils.CopyTexture(_device, _deviceContext, texture, subResource, buffer);
+        }
+
+        private static ISerializer GetSerializer(int version)
+        {
+            return version switch
+            {
+                1 => SerializerV1.Instance,
+                _ => throw new ArgumentException($"No serializer for version {version}", nameof(version))
+            };
+        }
+
         public static void Serialize(AetherTexImage image, Stream destination)
         {
+            var version = CurrentFormatVersion;
+            var serializer = GetSerializer(version);
+
             BinaryWriter binaryWriter = new BinaryWriter(destination, Encoding.UTF8, true);
             binaryWriter.Write(FormatTag);
-            binaryWriter
+            binaryWriter.Write((byte)version);
+
+            serializer.Serialize(image, binaryWriter);
+        }
+
+        public static AetherTexImage Deserialize(Stream source)
+        {
+            BinaryReader binaryReader = new BinaryReader(source);
+            ulong formatTag = binaryReader.ReadUInt64();
+            if (formatTag != FormatTag)
+            {
+                throw new InvalidDataException($"Invalid format tag: {formatTag}");
+            }
+
+            var version = binaryReader.ReadByte();
+            var serializer = GetSerializer(version);
+
+            return serializer.Deserialize(binaryReader);
         }
 
         private void Dispose(bool disposing)

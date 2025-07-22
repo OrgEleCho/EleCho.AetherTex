@@ -14,6 +14,8 @@ using EleCho.AetherTex;
 using AetherTex.Viewer.Dialogs;
 using SkiaSharp;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.Win32;
+using System.IO;
 
 namespace AetherTex.Viewer
 {
@@ -23,6 +25,9 @@ namespace AetherTex.Viewer
     [ObservableObject]
     public partial class MainWindow : Window
     {
+        private OpenFileDialog? _openImageDialog;
+        private SaveFileDialog? _saveImageDialog;
+
         [ObservableProperty]
         private AetherTexImage? _currentTexture;
 
@@ -64,6 +69,15 @@ namespace AetherTex.Viewer
             return new TextureData(TextureFormat.Bgra8888, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
         }
 
+        private void SetCurrentImage(AetherTexImage image)
+        {
+            CurrentTexture = image;
+            PresenterSource = image.Sources.First();
+            OutputSourceExpression = PresenterSource;
+
+            imageViewer.UpdateImage();
+        }
+
         private void NewMegaTexture_MenuItem_Click(object sender, RoutedEventArgs e)
         {
             var newTextureDialog = new NewTextureDialog()
@@ -76,16 +90,13 @@ namespace AetherTex.Viewer
                 return;
             }
 
-            CurrentTexture = new AetherTexImage(
+            SetCurrentImage(new AetherTexImage(
                 TextureFormat.Bgra8888,
                 newTextureDialog.TileWidth,
                 newTextureDialog.TileHeight,
                 newTextureDialog.Rows,
                 newTextureDialog.Columns,
-                newTextureDialog.Sources.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries));
-
-            PresenterSource = CurrentTexture.Sources.First();
-            OutputSourceExpression = PresenterSource;
+                newTextureDialog.Sources.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)));
         }
 
         private void ImportImage_MenuItem_Click(object sender, RoutedEventArgs e)
@@ -109,6 +120,63 @@ namespace AetherTex.Viewer
             var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
             CurrentTexture.Write(GetTextureData(bitmap), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
             megaTexturePresenter.UpdateTileImage(importImageDialog.Column, importImageDialog.Row);
+        }
+
+        private void OpenImage_MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            _openImageDialog ??= new OpenFileDialog()
+            {
+                Title = "Open Image",
+                Filter = "AetherTex Image|*.atimg",
+                CheckFileExists = true,
+            };
+
+            if (_openImageDialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            try
+            {
+                using var file = File.OpenRead(_openImageDialog.FileName);
+                var image = AetherTexImage.Deserialize(file);
+
+                SetCurrentImage(image);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Failed to open", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveImage_MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (CurrentTexture is null)
+            {
+                return;
+            }
+
+            _saveImageDialog ??= new SaveFileDialog()
+            {
+                Title = "Save Image",
+                Filter = "AetherTex Image|*.atimg",
+                DefaultExt = ".atimg",
+            };
+
+            if (_saveImageDialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            using var file = File.Create(_saveImageDialog.FileName);
+            try
+            {
+                AetherTexImage.Serialize(CurrentTexture, file);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Failed to save", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

@@ -14,6 +14,8 @@
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="File">
                     <MenuItem Header="New" Click="NewMegaTexture_MenuItem_Click"/>
+                    <MenuItem Header="Open" Click="OpenImage_MenuItem_Click"/>
+                    <MenuItem Header="Save" Click="SaveImage_MenuItem_Click"/>
                     <MenuItem Header="Import" Click="ImportImage_MenuItem_Click"/>
                 </MenuItem>
             </Menu>
