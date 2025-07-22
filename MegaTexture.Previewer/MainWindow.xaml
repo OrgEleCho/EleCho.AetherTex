@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:AetherTex.Viewer"
         xmlns:ctrl="clr-namespace:AetherTex.Viewer.Controls"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800"
+        Title="AetherTexImage Designer" Height="450" Width="800"
         d:DataContext="{d:DesignInstance Type=local:MainWindow}">
     <Grid>
         <DockPanel>
@@ -19,16 +19,17 @@
             </Menu>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="3"/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <DockPanel>
                     <Grid DockPanel.Dock="Bottom">
-                        <StackPanel Margin="8">
+                        <StackPanel Margin="8" HorizontalAlignment="Left">
                             <TextBlock Text="Source"/>
                             <ComboBox Name="sourceSelector"
+                                      MinWidth="120"
                                       ItemsSource="{Binding CurrentTexture.Sources}"
                                       SelectedItem="{Binding PresenterSource}"/>
                         </StackPanel>
@@ -53,9 +54,9 @@
                         <StackPanel Margin="8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition />
                                     <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
                                     <TextBlock Text="Width"/>

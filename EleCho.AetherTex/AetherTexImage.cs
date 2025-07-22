@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using EleCho.AetherTex.Helpers;
 using EleCho.AetherTex.Internal;
 using EleCho.AetherTex.Utilities;
@@ -15,6 +16,8 @@ namespace EleCho.AetherTex
     {
         const int TileMaxWidth = 8192;
         const int TileMaxHeight = 8192;
+        const ulong FormatTag = 0x41525458494D4745; // ARTXIMGE
+        const ulong FormatVersion
 
         private string[] _sources;
         private ExprSource? _defaultSource;
@@ -402,6 +405,13 @@ namespace EleCho.AetherTex
 
         public void Write(TextureData data, int column, int row)
             => Write(data, _sources[0], column, row);
+
+        public static void Serialize(AetherTexImage image, Stream destination)
+        {
+            BinaryWriter binaryWriter = new BinaryWriter(destination, Encoding.UTF8, true);
+            binaryWriter.Write(FormatTag);
+            binaryWriter
+        }
 
         private void Dispose(bool disposing)
         {
