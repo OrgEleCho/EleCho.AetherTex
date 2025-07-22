@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace MegaTextures.Previewer
+namespace AetherTex.Viewer
 {
     /// <summary>
     /// Interaction logic for App.xaml

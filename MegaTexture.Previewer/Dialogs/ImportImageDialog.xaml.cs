@@ -15,7 +15,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using EleCho.AetherTex;
 using Microsoft.Win32;
 
-namespace MegaTextures.Previewer.Dialogs
+namespace AetherTex.Viewer.Dialogs
 {
     /// <summary>
     /// ImportImageDialog.xaml 的交互逻辑

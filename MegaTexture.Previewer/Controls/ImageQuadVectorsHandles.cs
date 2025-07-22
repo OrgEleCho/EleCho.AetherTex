@@ -9,9 +9,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using EleCho.AetherTex;
 
-namespace MegaTextures.Previewer.Controls
+namespace AetherTex.Viewer.Controls
 {
-    internal class MegaTextureQuadVectorsHandles : FrameworkElement
+    internal class ImageQuadVectorsHandles : FrameworkElement
     {
         private readonly Vector2[] _quadVectors = new Vector2[4];
 
@@ -157,27 +157,27 @@ namespace MegaTextures.Previewer.Controls
 
 
         public static readonly DependencyProperty ReferenceProperty =
-            DependencyProperty.Register("Reference", typeof(AetherTexImage), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("Reference", typeof(AetherTexImage), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty HandleSizeProperty =
-            DependencyProperty.Register("HandleSize", typeof(double), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("HandleSize", typeof(double), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(10.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty HandleFillProperty =
-            DependencyProperty.Register("HandleFill", typeof(Brush), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("HandleFill", typeof(Brush), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(Brushes.DarkGreen, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty StrokeProperty =
-            DependencyProperty.Register("Stroke", typeof(Brush), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("Stroke", typeof(Brush), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty StrokeThicknessProperty =
-            DependencyProperty.Register("StrokeThickness", typeof(double), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("StrokeThickness", typeof(double), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
         public static readonly DependencyProperty QuadVectorsProperty =
-            DependencyProperty.Register("QuadVectors", typeof(QuadVectors), typeof(MegaTextureQuadVectorsHandles), 
+            DependencyProperty.Register("QuadVectors", typeof(QuadVectors), typeof(ImageQuadVectorsHandles), 
                 new FrameworkPropertyMetadata(default(QuadVectors), FrameworkPropertyMetadataOptions.AffectsRender, propertyChangedCallback: OnQuadVectorsChanged)
                 {
                     BindsTwoWayByDefault = true
@@ -185,7 +185,7 @@ namespace MegaTextures.Previewer.Controls
 
         private static void OnQuadVectorsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not MegaTextureQuadVectorsHandles handles ||
+            if (d is not ImageQuadVectorsHandles handles ||
                 e.NewValue is not QuadVectors newQuadVectors)
             {
                 return;

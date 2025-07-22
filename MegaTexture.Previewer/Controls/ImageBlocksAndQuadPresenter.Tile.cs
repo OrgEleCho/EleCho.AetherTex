@@ -4,9 +4,9 @@ using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EleCho.AetherTex;
 
-namespace MegaTextures.Previewer.Controls
+namespace AetherTex.Viewer.Controls
 {
-    public partial class MegaTexturePresenter
+    public partial class ImageBlocksAndQuadPresenter
     {
         private readonly Dictionary<string, AetherTexImage.ExprSource> _cachedSources = new();
 
@@ -32,11 +32,11 @@ namespace MegaTextures.Previewer.Controls
             }
         }
 
-        public partial class MegaTextureTile : ObservableObject
+        public partial class Tile : ObservableObject
         {
             private WriteableBitmap? _tileImage;
 
-            public MegaTextureTile(MegaTexturePresenter owner, AetherTexImage texture, int row, int column)
+            public Tile(ImageBlocksAndQuadPresenter owner, AetherTexImage texture, int row, int column)
             {
                 Owner = owner;
                 Texture = texture;
@@ -44,7 +44,7 @@ namespace MegaTextures.Previewer.Controls
                 Column = column;
             }
 
-            public MegaTexturePresenter Owner { get; }
+            public ImageBlocksAndQuadPresenter Owner { get; }
             public AetherTexImage Texture { get; }
             public int Row { get; }
             public int Column { get; }

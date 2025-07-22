@@ -14,13 +14,13 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using EleCho.AetherTex;
 
-namespace MegaTextures.Previewer.Controls
+namespace AetherTex.Viewer.Controls
 {
-    public partial class MegaTexturePresenter : Control
+    public partial class ImageBlocksAndQuadPresenter : Control
     {
-        static MegaTexturePresenter()
+        static ImageBlocksAndQuadPresenter()
         {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(MegaTexturePresenter), new FrameworkPropertyMetadata(typeof(MegaTexturePresenter)));
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(ImageBlocksAndQuadPresenter), new FrameworkPropertyMetadata(typeof(ImageBlocksAndQuadPresenter)));
         }
 
         public AetherTexImage Texture
@@ -40,9 +40,9 @@ namespace MegaTextures.Previewer.Controls
             set { SetValue(QuadVectorsProperty, value); }
         }
 
-        public IReadOnlyList<MegaTextureTile> TextureTiles
+        public IReadOnlyList<Tile> TextureTiles
         {
-            get { return (IReadOnlyList<MegaTextureTile>)GetValue(TextureTilesProperty); }
+            get { return (IReadOnlyList<Tile>)GetValue(TextureTilesProperty); }
             private set { SetValue(TextureTilesPropertyKey, value); }
         }
 
@@ -58,25 +58,25 @@ namespace MegaTextures.Previewer.Controls
 
 
         public static readonly DependencyProperty TextureProperty =
-            DependencyProperty.Register(nameof(Texture), typeof(AetherTexImage), typeof(MegaTexturePresenter), new PropertyMetadata(null, propertyChangedCallback: OnTextureChanged));
+            DependencyProperty.Register(nameof(Texture), typeof(AetherTexImage), typeof(ImageBlocksAndQuadPresenter), new PropertyMetadata(null, propertyChangedCallback: OnTextureChanged));
 
         public static readonly DependencyProperty SourceProperty =
-            DependencyProperty.Register(nameof(Source), typeof(string), typeof(MegaTexturePresenter), new PropertyMetadata("color", propertyChangedCallback: OnSourceChanged));
+            DependencyProperty.Register(nameof(Source), typeof(string), typeof(ImageBlocksAndQuadPresenter), new PropertyMetadata("color", propertyChangedCallback: OnSourceChanged));
 
         public static readonly DependencyProperty QuadVectorsProperty =
-            DependencyProperty.Register(nameof(QuadVectors), typeof(QuadVectors), typeof(MegaTexturePresenter), new FrameworkPropertyMetadata(default(QuadVectors))
+            DependencyProperty.Register(nameof(QuadVectors), typeof(QuadVectors), typeof(ImageBlocksAndQuadPresenter), new FrameworkPropertyMetadata(default(QuadVectors))
             {
                 BindsTwoWayByDefault = true,
             });
 
         private static readonly DependencyPropertyKey TextureTilesPropertyKey =
-            DependencyProperty.RegisterReadOnly(nameof(TextureTiles), typeof(IReadOnlyList<MegaTextureTile>), typeof(MegaTexturePresenter), new PropertyMetadata(Array.Empty<MegaTextureTile>()));
+            DependencyProperty.RegisterReadOnly(nameof(TextureTiles), typeof(IReadOnlyList<Tile>), typeof(ImageBlocksAndQuadPresenter), new PropertyMetadata(Array.Empty<Tile>()));
 
         public static readonly DependencyProperty TextureTilesProperty = TextureTilesPropertyKey.DependencyProperty;
 
         private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not MegaTexturePresenter presenter ||
+            if (d is not ImageBlocksAndQuadPresenter presenter ||
                 presenter.Texture is not { } texture)
             {
                 return;
@@ -93,19 +93,19 @@ namespace MegaTextures.Previewer.Controls
 
         private static void OnTextureChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not MegaTexturePresenter presenter)
+            if (d is not ImageBlocksAndQuadPresenter presenter)
             {
                 return;
             }
 
             if (e.NewValue is AetherTexImage newTexture)
             {
-                var tiles = new List<MegaTextureTile>();
+                var tiles = new List<Tile>();
                 for (int y = 0; y < newTexture.Rows; y++)
                 {
                     for (int x = 0; x < newTexture.Columns; x++)
                     {
-                        tiles.Add(new MegaTextureTile(presenter, newTexture, y, x));
+                        tiles.Add(new Tile(presenter, newTexture, y, x));
                     }
                 }
 
@@ -119,7 +119,7 @@ namespace MegaTextures.Previewer.Controls
             }
             else
             {
-                presenter.TextureTiles = Array.Empty<MegaTextureTile>();
+                presenter.TextureTiles = Array.Empty<Tile>();
             }
         }
 

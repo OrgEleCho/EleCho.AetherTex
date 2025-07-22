@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace MegaTextures.Previewer.Dialogs
+namespace AetherTex.Viewer.Dialogs
 {
     /// <summary>
     /// NewTextureDialog.xaml 的交互逻辑

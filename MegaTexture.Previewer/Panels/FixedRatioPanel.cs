@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MegaTextures.Previewer.Panels
+namespace AetherTex.Viewer.Panels
 {
     public class FixedRatioPanel : Panel
     {
@@ -30,6 +30,28 @@ namespace MegaTextures.Previewer.Panels
 
         protected override Size MeasureOverride(Size availableSize)
         {
+            var ratio = ReferenceWidth / ReferenceHeight;
+            if (double.IsNaN(ratio))
+            {
+                ratio = Ratio;
+            }
+            if (double.IsNaN(ratio))
+            {
+                ratio = 1;
+            }
+
+            var finalWidth = availableSize.Width;
+            var finalHeight = availableSize.Width / ratio;
+            if (finalHeight > availableSize.Height)
+            {
+                finalHeight = availableSize.Height;
+                finalWidth = availableSize.Height * ratio;
+            }
+
+            availableSize = new Size(
+                Math.Min(availableSize.Width, finalWidth),
+                Math.Min(availableSize.Height, finalHeight));
+
             Size finalSize = new Size(0, 0);
             foreach (UIElement child in InternalChildren)
             {

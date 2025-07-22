@@ -11,11 +11,11 @@ using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EleCho.AetherTex;
-using MegaTextures.Previewer.Dialogs;
+using AetherTex.Viewer.Dialogs;
 using SkiaSharp;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace MegaTextures.Previewer
+namespace AetherTex.Viewer
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -64,19 +64,6 @@ namespace MegaTextures.Previewer
             return new TextureData(TextureFormat.Bgra8888, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
         }
 
-        partial void OnQuadVectorsChanged(QuadVectors value)
-            => UpdateOutput();
-
-        partial void OnOutputSourceExpressionChanged(string? value)
-            => UpdateOutput();
-
-        partial void OnOutputWidthChanged(int value)
-            => UpdateOutput();
-
-        partial void OnOutputHeightChanged(int oldValue, int newValue)
-            => UpdateOutput();
-
-
         private void NewMegaTexture_MenuItem_Click(object sender, RoutedEventArgs e)
         {
             var newTextureDialog = new NewTextureDialog()
@@ -122,56 +109,6 @@ namespace MegaTextures.Previewer
             var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
             CurrentTexture.Write(GetTextureData(bitmap), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
             megaTexturePresenter.UpdateTileImage(importImageDialog.Column, importImageDialog.Row);
-            UpdateOutput();
-        }
-
-        private void UpdateOutput()
-        {
-            if (OutputWidth <= 0 ||
-                OutputHeight <= 0)
-            {
-                ErrorMessage = "Invalid Output Size";
-                return;
-            }
-
-            if (CurrentOutput is null ||
-                CurrentOutput.Width != OutputWidth ||
-                CurrentOutput.Height != OutputHeight)
-            {
-                CurrentOutput = new WriteableBitmap(OutputWidth, OutputHeight, 96, 96, PixelFormats.Bgra32, null);
-            }
-
-            if (CurrentTexture is null)
-            {
-                ErrorMessage = "No MegaTexture";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(OutputSourceExpression))
-            {
-                ErrorMessage = "Empty Source Expression";
-                return;
-            }
-
-            AetherTexImage.ExprSource source;
-            try
-            {
-                source = CurrentTexture.CreateSource(OutputSourceExpression);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Invalid Source Expression. {ex.Message}";
-                return;
-            }
-
-            var quad = QuadVectors;
-            var buffer = new TextureData(TextureFormat.Bgra8888, OutputWidth, OutputHeight, CurrentOutput.BackBuffer, CurrentOutput.BackBufferStride);
-
-            CurrentOutput.Lock();
-            CurrentTexture.Read(source, quad, buffer);
-            CurrentOutput.AddDirtyRect(new Int32Rect(0, 0, OutputWidth, OutputHeight));
-            CurrentOutput.Unlock();
-            ErrorMessage = null;
         }
     }
 }

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{BB8B0C8F-F0F0-40EB-96F3-A14A7614EB24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MegaTextures.Previewer", "MegaTexture.Previewer\MegaTextures.Previewer.csproj", "{65214CC6-675F-4069-8D52-06A28C09F3D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AetherTex.Viewer", "MegaTexture.Previewer\AetherTex.Viewer.csproj", "{65214CC6-675F-4069-8D52-06A28C09F3D5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EleCho.AetherTex", "EleCho.AetherTex\EleCho.AetherTex.csproj", "{8507DEAB-F245-8645-8322-1EEB7B70F580}"
 EndProject
