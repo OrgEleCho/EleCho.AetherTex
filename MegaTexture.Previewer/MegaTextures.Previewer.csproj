@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="EleCho.WpfSuite.ValueConverters" Version="0.9.4" />
     <PackageReference Include="SkiaSharp" Version="3.119.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>

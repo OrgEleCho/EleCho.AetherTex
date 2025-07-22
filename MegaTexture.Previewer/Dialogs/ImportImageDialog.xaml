@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MegaTextures.Previewer.Dialogs"
+        WindowStartupLocation="CenterOwner"
         mc:Ignorable="d"
         Title="ImportImageDialog" Height="380" Width="320"
         d:DataContext="{d:DesignInstance Type=local:ImportImageDialog}">

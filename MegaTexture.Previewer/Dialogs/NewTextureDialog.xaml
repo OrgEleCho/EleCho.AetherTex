@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MegaTextures.Previewer.Dialogs"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
         Title="NewTextureDialog" Height="380" Width="320"
         d:DataContext="{d:DesignInstance Type=local:NewTextureDialog}">
     <DockPanel Margin="18">

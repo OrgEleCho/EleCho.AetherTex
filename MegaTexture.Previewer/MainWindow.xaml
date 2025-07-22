@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ws="https://schemas.elecho.dev/wpfsuite"
         xmlns:local="clr-namespace:MegaTextures.Previewer"
         xmlns:ctrl="clr-namespace:MegaTextures.Previewer.Controls"
         mc:Ignorable="d"
@@ -35,7 +36,8 @@
                     <ctrl:MegaTexturePresenter x:Name="megaTexturePresenter"
                                                Texture="{Binding CurrentTexture}"
                                                QuadVectors="{Binding QuadVectors}"
-                                               Source="{Binding PresenterSource}"/>
+                                               Source="{Binding PresenterSource}"
+                                               Margin="12"/>
                 </DockPanel>
 
                 <GridSplitter VerticalAlignment="Stretch"
@@ -49,13 +51,48 @@
                 <DockPanel Grid.Column="2">
                     <Grid DockPanel.Dock="Bottom">
                         <StackPanel Margin="8">
-                            <TextBlock Text="Source"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Width"/>
+                                    <TextBox Text="{Binding OutputWidth,UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Height"/>
+                                    <TextBox Text="{Binding OutputHeight,UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="Source"
+                                       Margin="0 4 0 0"/>
                             <ComboBox ItemsSource="{Binding PredefinedSources}"
                                       IsEditable="True"
                                       Text="{Binding OutputSourceExpression}"/>
                         </StackPanel>
                     </Grid>
-                    <Image Source="{Binding CurrentOutput}" />
+                    <Grid>
+                        <Grid.Resources>
+                            <ws:ValueConverterGroup x:Key="StringNotWhiteSpaceToVisibilityConverter">
+                                <ws:StringIsNotNullOrWhiteSpaceConverter/>
+                                <ws:BooleanToVisibilityConverter/>
+                            </ws:ValueConverterGroup>
+                        </Grid.Resources>
+                        <Image Source="{Binding CurrentOutput}"
+                               Margin="12"/>
+                        <Border x:Name="errorMessageLayer"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Background="#aa000000"
+                                Visibility="{Binding ErrorMessage,Converter={StaticResource StringNotWhiteSpaceToVisibilityConverter}}"
+                                Padding="24">
+                            <TextBlock Text="{Binding ErrorMessage}"
+                                       d:Text="Test Error Message"
+                                       Foreground="#f25767"/>
+                        </Border>
+                    </Grid>
                 </DockPanel>
             </Grid>
         </DockPanel>

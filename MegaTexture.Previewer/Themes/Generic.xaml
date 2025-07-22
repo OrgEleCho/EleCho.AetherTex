@@ -2,7 +2,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:MegaTextures.Previewer.Controls"
-    xmlns:panels="clr-namespace:MegaTextures.Previewer.Panels">
+    xmlns:panels="clr-namespace:MegaTextures.Previewer.Panels"
+    xmlns:ws="https://schemas.elecho.dev/wpfsuite">
 
 
     <Style TargetType="{x:Type local:MegaTexturePresenter}">
@@ -12,6 +13,12 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
+                        <Border.Resources>
+                            <ws:ValueConverterGroup x:Key="ValueNotNullToVisibilityConverter">
+                                <ws:ValueIsNotNullConverter/>
+                                <ws:BooleanToVisibilityConverter/>
+                            </ws:ValueConverterGroup>
+                        </Border.Resources>
                         <panels:FixedRatioPanel ReferenceWidth="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Texture.Width}"
                                                 ReferenceHeight="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Texture.Height}">
                             <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=TextureTiles}">
@@ -45,7 +52,9 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <local:MegaTextureQuadVectorsHandles Reference="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Texture}"
-                                                                 QuadVectors="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=QuadVectors}"/>
+                                                                 QuadVectors="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=QuadVectors}"
+                                                                 Visibility="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Texture,Converter={StaticResource ValueNotNullToVisibilityConverter}}">
+                            </local:MegaTextureQuadVectorsHandles>
                         </panels:FixedRatioPanel>
                     </Border>
                 </ControlTemplate>

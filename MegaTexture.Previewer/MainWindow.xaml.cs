@@ -65,14 +65,17 @@ namespace MegaTextures.Previewer
         }
 
         partial void OnQuadVectorsChanged(QuadVectors value)
-        {
-            UpdateOutput();
-        }
+            => UpdateOutput();
 
         partial void OnOutputSourceExpressionChanged(string? value)
-        {
-            UpdateOutput();
-        }
+            => UpdateOutput();
+
+        partial void OnOutputWidthChanged(int value)
+            => UpdateOutput();
+
+        partial void OnOutputHeightChanged(int oldValue, int newValue)
+            => UpdateOutput();
+
 
         private void NewMegaTexture_MenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -95,6 +98,7 @@ namespace MegaTextures.Previewer
                 newTextureDialog.Sources.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries));
 
             PresenterSource = CurrentTexture.Sources.First();
+            OutputSourceExpression = PresenterSource;
         }
 
         private void ImportImage_MenuItem_Click(object sender, RoutedEventArgs e)
@@ -123,6 +127,13 @@ namespace MegaTextures.Previewer
 
         private void UpdateOutput()
         {
+            if (OutputWidth <= 0 ||
+                OutputHeight <= 0)
+            {
+                ErrorMessage = "Invalid Output Size";
+                return;
+            }
+
             if (CurrentOutput is null ||
                 CurrentOutput.Width != OutputWidth ||
                 CurrentOutput.Height != OutputHeight)
@@ -136,7 +147,7 @@ namespace MegaTextures.Previewer
                 return;
             }
 
-            if (OutputSourceExpression is null)
+            if (string.IsNullOrWhiteSpace(OutputSourceExpression))
             {
                 ErrorMessage = "Empty Source Expression";
                 return;
@@ -160,6 +171,7 @@ namespace MegaTextures.Previewer
             CurrentTexture.Read(source, quad, buffer);
             CurrentOutput.AddDirtyRect(new Int32Rect(0, 0, OutputWidth, OutputHeight));
             CurrentOutput.Unlock();
+            ErrorMessage = null;
         }
     }
 }
