@@ -19,6 +19,8 @@ namespace EleCho.AetherTex
 
             public ExprSource(AetherTexImage owner, string expression)
             {
+                var shaderExpression = ColorExpressionParser.GetShaderExpressionForSourceExpr(expression, owner._sources);
+
                 _pixelShaderBlob = DxUtils.Compile(owner._compiler, "shader", "ps_main", "ps_5_0",
                     AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"),
                     new Dictionary<string, string>()
@@ -28,7 +30,7 @@ namespace EleCho.AetherTex
                         ["TileHeight"] = owner.TileHeight.ToString(),
                         ["TileRows"] = owner.Rows.ToString(),
                         ["TileColumns"] = owner.Columns.ToString(),
-                        ["SourceExpr"] = ColorExpressionParser.GetShaderExpressionForSourceExpr(expression, owner._sources)
+                        ["SourceExpr"] = shaderExpression
                     });
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);

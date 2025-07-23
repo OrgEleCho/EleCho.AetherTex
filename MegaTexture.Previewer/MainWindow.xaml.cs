@@ -120,6 +120,7 @@ namespace AetherTex.Viewer
             var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
             CurrentTexture.Write(GetTextureData(bitmap), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
             megaTexturePresenter.UpdateTileImage(importImageDialog.Column, importImageDialog.Row);
+            imageViewer.UpdateImage();
         }
 
         private void OpenImage_MenuItem_Click(object sender, RoutedEventArgs e)

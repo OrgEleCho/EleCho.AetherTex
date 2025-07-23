@@ -94,15 +94,6 @@ namespace AetherTex.Viewer.Controls
                     _currentOutput = new WriteableBitmap(OutputWidth, OutputHeight, 96, 96, PixelFormats.Bgra32, null);
                 }
 
-                _currentOutput.Lock();
-
-                var buffer = new TextureData(
-                    TextureFormat.Bgra8888,
-                    OutputWidth,
-                    OutputHeight,
-                    _currentOutput.BackBuffer,
-                    _currentOutput.BackBufferStride);
-
                 try
                 {
                     if (!_cachedExpressions.TryGetValue(SourceExpression, out var source))
@@ -110,15 +101,24 @@ namespace AetherTex.Viewer.Controls
                         source = _cachedExpressions[SourceExpression] = Input.CreateSource(SourceExpression);
                     }
 
+                    _currentOutput.Lock();
+
+                    var buffer = new TextureData(
+                        TextureFormat.Bgra8888,
+                        OutputWidth,
+                        OutputHeight,
+                        _currentOutput.BackBuffer,
+                        _currentOutput.BackBufferStride);
+
                     Input.Read(source, QuadVectors, buffer);
                     _currentOutput.AddDirtyRect(new Int32Rect(0, 0, OutputWidth, OutputHeight));
+
                     _currentOutput.Unlock();
                 }
                 catch (Exception ex)
                 {
                     ErrorMessage = $"Invalid Source Expression, {ex.Message}";
                 }
-
             }
 
             Output = _currentOutput;
