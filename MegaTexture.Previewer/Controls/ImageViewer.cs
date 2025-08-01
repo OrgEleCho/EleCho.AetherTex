@@ -112,8 +112,13 @@ namespace AetherTex.Viewer.Controls
                         _currentOutput.BackBufferStride);
 
                     Input.Read(source, QuadVectors, buffer);
-                    _currentOutput.AddDirtyRect(new Int32Rect(0, 0, OutputWidth, OutputHeight));
 
+                    if (Input.Format == TextureFormat.Float32)
+                    {
+                        buffer.NormalizeFloat(null, null);
+                    }
+
+                    _currentOutput.AddDirtyRect(new Int32Rect(0, 0, OutputWidth, OutputHeight));
                     _currentOutput.Unlock();
                 }
                 catch (Exception ex)

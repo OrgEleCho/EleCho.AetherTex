@@ -75,6 +75,11 @@ namespace AetherTex.Viewer.Controls
 
                 var buffer = new TextureData(Owner.Texture.Format, tileImage.PixelWidth, tileImage.PixelHeight, tileImage.BackBuffer, tileImage.BackBufferStride);
                 Texture.Read(source, quadVectors, buffer);
+                if (buffer.Format == TextureFormat.Float32)
+                {
+                    buffer.NormalizeFloat(null, null);
+                }
+
                 tileImage.AddDirtyRect(new System.Windows.Int32Rect(0, 0, tileImage.PixelWidth, tileImage.PixelHeight));
                 tileImage.Unlock();
 
