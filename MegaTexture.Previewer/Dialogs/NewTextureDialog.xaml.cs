@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
+using EleCho.AetherTex;
 
 namespace AetherTex.Viewer.Dialogs
 {
@@ -21,6 +22,8 @@ namespace AetherTex.Viewer.Dialogs
     [ObservableObject]
     public partial class NewTextureDialog : Window
     {
+        public static TextureFormat[] Formats { get; } = Enum.GetValues<TextureFormat>();
+
         [ObservableProperty]
         private int _tileWidth = 1024;
 
@@ -35,6 +38,9 @@ namespace AetherTex.Viewer.Dialogs
 
         [ObservableProperty]
         private string _sources = "color";
+
+        [ObservableProperty]
+        private TextureFormat _format = TextureFormat.Rgba8888;
 
         public NewTextureDialog()
         {

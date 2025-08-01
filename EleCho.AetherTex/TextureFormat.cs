@@ -5,8 +5,9 @@
         Bgra8888,
         Rgba8888,
 
-        UInt8,
-        UInt16,
+        Gray8,
+        Gray16,
+
         Float32,
     }
 }

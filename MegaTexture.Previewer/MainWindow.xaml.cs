@@ -16,6 +16,7 @@ using SkiaSharp;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.Win32;
 using System.IO;
+using BitMiracle.LibTiff.Classic;
 
 namespace AetherTex.Viewer
 {
@@ -66,7 +67,10 @@ namespace AetherTex.Viewer
 
         private static TextureData GetTextureData(SKBitmap bitmap)
         {
-            return new TextureData(TextureFormat.Bgra8888, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
+            return new TextureData(bitmap.ColorType switch
+            {
+                SKColorType.Gray8 => TextureFormat.Gray8,
+            }, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
         }
 
         private void SetCurrentImage(AetherTexImage image)
@@ -91,12 +95,85 @@ namespace AetherTex.Viewer
             }
 
             SetCurrentImage(new AetherTexImage(
-                TextureFormat.Bgra8888,
+                newTextureDialog.Format,
                 newTextureDialog.TileWidth,
                 newTextureDialog.TileHeight,
                 newTextureDialog.Rows,
                 newTextureDialog.Columns,
                 newTextureDialog.Sources.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)));
+        }
+
+        /// <summary>
+        /// 读取 tiled float32 TIFF 文件，并转换为一维 float[]（行主序）。
+        /// </summary>
+        public static float[] ReadTiledFloat32Tiff(string filePath, out int width, out int height)
+        {
+            using (Tiff image = Tiff.Open(filePath, "r"))
+            {
+                if (image == null)
+                    throw new Exception("Failed to open TIFF file.");
+
+                width = image.GetField(TiffTag.IMAGEWIDTH)[0].ToInt();
+                height = image.GetField(TiffTag.IMAGELENGTH)[0].ToInt();
+                int tileWidth = image.GetField(TiffTag.TILEWIDTH)[0].ToInt();
+                int tileHeight = image.GetField(TiffTag.TILELENGTH)[0].ToInt();
+                int bitsPerSample = image.GetField(TiffTag.BITSPERSAMPLE)[0].ToInt();
+                int sampleFormat = image.GetField(TiffTag.SAMPLEFORMAT)[0].ToInt();
+
+                // 校验格式
+                if (bitsPerSample != 32 || sampleFormat != (int)SampleFormat.IEEEFP)
+                    throw new NotSupportedException("TIFF must be float32 (bitsPerSample=32, sampleFormat=IEEEFP)");
+
+                if (!image.IsTiled())
+                    throw new NotSupportedException("TIFF must be tiled storage (IsTiled==true)");
+
+                int totalPixels = width * height;
+                float[] result = new float[totalPixels];
+
+                int tilesX = (width + tileWidth - 1) / tileWidth;
+                int tilesY = (height + tileHeight - 1) / tileHeight;
+                int tileSize = image.TileSize();
+                byte[] buffer = new byte[tileSize];
+
+                for (int ty = 0; ty < tilesY; ty++)
+                {
+                    for (int tx = 0; tx < tilesX; tx++)
+                    {
+                        int x = tx * tileWidth;
+                        int y = ty * tileHeight;
+                        int bytesRead = image.ReadTile(buffer, 0, x, y, 0, 0);
+                        if (bytesRead == 0)
+                            throw new Exception($"Failed to read tile at ({x},{y})");
+
+                        // 遍历 tile 内像素
+                        for (int row = 0; row < tileHeight; row++)
+                        {
+                            int imgY = y + row;
+                            if (imgY >= height) break;
+                            for (int col = 0; col < tileWidth; col++)
+                            {
+                                int imgX = x + col;
+                                if (imgX >= width) break;
+                                int pixelIndex = imgY * width + imgX;
+                                int tilePixelIndex = row * tileWidth + col;
+                                int byteIndex = tilePixelIndex * 4;
+
+                                // 处理字节序（TIFF 可能为大端）
+                                float value = BitConverter.ToSingle(buffer, byteIndex);
+                                if (image.IsBigEndian())
+                                {
+                                    byte[] temp = new byte[4];
+                                    Array.Copy(buffer, byteIndex, temp, 0, 4);
+                                    Array.Reverse(temp);
+                                    value = BitConverter.ToSingle(temp, 0);
+                                }
+                                result[pixelIndex] = value;
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
         }
 
         private void ImportImage_MenuItem_Click(object sender, RoutedEventArgs e)
@@ -117,8 +194,24 @@ namespace AetherTex.Viewer
                 return;
             }
 
-            var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
-            CurrentTexture.Write(GetTextureData(bitmap), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+            if (CurrentTexture.Format == TextureFormat.Float32)
+            {
+                var depth = ReadTiledFloat32Tiff(importImageDialog.FilePath, out var width, out var height);
+
+                unsafe
+                {
+                    fixed(float* ptr = depth)
+                    {
+                        CurrentTexture.Write(new TextureData(TextureFormat.Float32, width, height, (nint)ptr, width * sizeof(float)), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+                    }
+                }
+            }
+            else
+            {
+                using var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
+                CurrentTexture.Write(GetTextureData(bitmap), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+            }
+
             megaTexturePresenter.UpdateTileImage(importImageDialog.Column, importImageDialog.Row);
             imageViewer.UpdateImage();
         }

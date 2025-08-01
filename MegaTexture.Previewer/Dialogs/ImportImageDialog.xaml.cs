@@ -55,7 +55,7 @@ namespace AetherTex.Viewer.Dialogs
             _openFileDialog ??= new OpenFileDialog()
             {
                 Title = "Open image",
-                Filter = "Any Image|*.jpg;*.jpeg;*.png;*.bmp|JPEG Image|*.jpg;*.jpeg|PNG Image|*.png|BMP Image|*.bmp",
+                Filter = "Any Image|*.jpg;*.jpeg;*.png;*.bmp;*.tif|JPEG Image|*.jpg;*.jpeg|PNG Image|*.png|BMP Image|*.bmp",
                 CheckFileExists = true,
             };
 

@@ -1,4 +1,5 @@
-﻿using EleCho.AetherTex;
+﻿using AetherTex.Viewer.Extensions;
+using EleCho.AetherTex;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -91,7 +92,7 @@ namespace AetherTex.Viewer.Controls
                     _currentOutput.PixelWidth != OutputWidth ||
                     _currentOutput.PixelHeight != OutputHeight)
                 {
-                    _currentOutput = new WriteableBitmap(OutputWidth, OutputHeight, 96, 96, PixelFormats.Bgra32, null);
+                    _currentOutput = new WriteableBitmap(OutputWidth, OutputHeight, 96, 96, Input.Format.ToWpf(), null);
                 }
 
                 try
@@ -104,7 +105,7 @@ namespace AetherTex.Viewer.Controls
                     _currentOutput.Lock();
 
                     var buffer = new TextureData(
-                        TextureFormat.Bgra8888,
+                        Input.Format,
                         OutputWidth,
                         OutputHeight,
                         _currentOutput.BackBuffer,

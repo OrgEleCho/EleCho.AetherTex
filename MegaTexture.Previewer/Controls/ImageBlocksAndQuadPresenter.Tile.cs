@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using AetherTex.Viewer.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EleCho.AetherTex;
 
@@ -63,7 +64,7 @@ namespace AetherTex.Viewer.Controls
                     return;
                 }
 
-                var tileImage = _tileImage ?? new WriteableBitmap(Texture.TileWidth, Texture.TileHeight, 96, 96, PixelFormats.Bgra32, null);
+                var tileImage = _tileImage ?? new WriteableBitmap(Texture.TileWidth, Texture.TileHeight, 96, 96, Owner.Texture.Format.ToWpf(), null);
                 tileImage.Lock();
 
                 var quadVectors = new QuadVectors(
@@ -72,7 +73,7 @@ namespace AetherTex.Viewer.Controls
                     new Vector2(Texture.TileWidth * (Column + 1), Texture.TileHeight * (Row + 1)),
                     new Vector2(Texture.TileWidth * (Column), Texture.TileHeight * (Row + 1)));
 
-                var buffer = new TextureData(TextureFormat.Bgra8888, tileImage.PixelWidth, tileImage.PixelHeight, tileImage.BackBuffer, tileImage.BackBufferStride);
+                var buffer = new TextureData(Owner.Texture.Format, tileImage.PixelWidth, tileImage.PixelHeight, tileImage.BackBuffer, tileImage.BackBufferStride);
                 Texture.Read(source, quadVectors, buffer);
                 tileImage.AddDirtyRect(new System.Windows.Int32Rect(0, 0, tileImage.PixelWidth, tileImage.PixelHeight));
                 tileImage.Unlock();

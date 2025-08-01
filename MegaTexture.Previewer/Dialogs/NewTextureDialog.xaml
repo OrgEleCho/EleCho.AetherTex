@@ -34,6 +34,10 @@
                        Margin="0 4 0 0"/>
             <TextBox Text="{Binding Sources}"
                      AcceptsReturn="True"/>
+            <TextBlock Text="Format:"
+                       Margin="0 4 0 0"/>
+            <ComboBox ItemsSource="{x:Static local:NewTextureDialog.Formats}"
+                      SelectedItem="{Binding Format}"/>
         </StackPanel>
     </DockPanel>
 </Window>
