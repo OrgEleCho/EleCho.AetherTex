@@ -158,7 +158,7 @@ namespace EleCho.AetherTex.Utilities
         public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, ReadOnlySpan<D3DShaderMacro> macros)
             => Compile(compiler, sourceName, entryPoint, target, shaderSource, macros, default);
 
-        public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, IEnumerable<KeyValuePair<string, string>> macros)
+        public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, IEnumerable<KeyValuePair<string, string>> macros, ComPtr<ID3DInclude> include)
         {
             KeyValuePair<NativeString, NativeString>[] nativeMacros = macros
                 .Select(kv => new KeyValuePair<NativeString, NativeString>(new NativeString(kv.Key), new NativeString(kv.Value)))
@@ -168,7 +168,7 @@ namespace EleCho.AetherTex.Utilities
                 .Select(kv => new D3DShaderMacro((byte*)kv.Key.ASCII, (byte*)kv.Value.ASCII))
                 .ToArray();
 
-            var shader = Compile(compiler, sourceName, entryPoint, target, shaderSource, d3dMacros);
+            var shader = Compile(compiler, sourceName, entryPoint, target, shaderSource, d3dMacros, include);
 
             foreach (var kv in nativeMacros)
             {
@@ -178,6 +178,9 @@ namespace EleCho.AetherTex.Utilities
 
             return shader;
         }
+
+        public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, IEnumerable<KeyValuePair<string, string>> macros)
+            => Compile(compiler, sourceName, entryPoint, target, shaderSource, macros, default);
 
         public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource)
             => Compile(compiler, sourceName, entryPoint, target, shaderSource, Array.Empty<D3DShaderMacro>());

@@ -20,9 +20,10 @@ namespace EleCho.AetherTex
             public ExprSource(AetherTexImage owner, string expression)
             {
                 var shaderExpression = ColorExpressionParser.GetShaderExpressionForSourceExpr(expression, owner._sources);
+                var shaderFileName = GetShaderEntryPointFileName(owner.Format);
 
                 _pixelShaderBlob = DxUtils.Compile(owner._compiler, "shader", "ps_main", "ps_5_0",
-                    AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"),
+                    AssemblyResourceUtils.GetShaderBytes(shaderFileName),
                     new Dictionary<string, string>()
                     {
                         ["SourceCount"] = owner._sources.Length.ToString(),
@@ -31,7 +32,7 @@ namespace EleCho.AetherTex
                         ["TileRows"] = owner.Rows.ToString(),
                         ["TileColumns"] = owner.Columns.ToString(),
                         ["SourceExpr"] = shaderExpression
-                    });
+                    }, owner._include);
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);
                 Owner = owner;

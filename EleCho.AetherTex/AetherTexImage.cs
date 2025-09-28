@@ -19,7 +19,9 @@ namespace EleCho.AetherTex
         const ulong FormatTag = 0x41525458494D4745; // ARTXIMGE
         const int CurrentFormatVersion = 1;
 
-        private string[] _sources;
+        private readonly string[] _sources;
+        private readonly Dictionary<string, (nint DataPointer, int DataSize)> _openedShaderSources;
+
         private ExprSource? _defaultSource;
 
         private D3D11 _api;
@@ -29,6 +31,7 @@ namespace EleCho.AetherTex
         private BufferDesc _vertexBufferDesc;
         private SamplerDesc _samplerDesc;
 
+        private ComPtr<ID3DInclude> _include;
         private ComPtr<ID3D11Device> _device;
         private ComPtr<ID3D11DeviceContext> _deviceContext;
         private ComPtr<ID3D11Texture2D>[] _textures;
@@ -66,6 +69,66 @@ namespace EleCho.AetherTex
 
         public QuadVectors FullQuad { get; }
 
+        private static string GetShaderEntryPointFileName(TextureFormat textureFormat)
+        {
+            return textureFormat switch
+            {
+                TextureFormat.BayerRggb => "AetherTexImageBayerRggb.hlsl",
+                TextureFormat.BayerBggr => "AetherTexImageBayerBggr.hlsl",
+                TextureFormat.BayerGrbg => "AetherTexImageBayerGrbg.hlsl",
+                TextureFormat.BayerGbrg => "AetherTexImageBayerGbrg.hlsl",
+                _ => "AetherTexImage.hlsl",
+            };
+        }
+
+        private int D3DIncludeOpen(
+            ID3DInclude* self, D3DIncludeType includeType, byte* pFileName, void* pParentData, void** ppData, uint* pBytesPtr)
+        {
+            if (includeType != D3DIncludeType.D3DIncludeSystem)
+            {
+                return unchecked((int)0x80004001); // E_NOTIMPL
+            }
+
+            string fileName = Marshal.PtrToStringAnsi((nint)pFileName) ?? string.Empty;
+            if (_openedShaderSources.TryGetValue(fileName, out var existData))
+            {
+                *ppData = (void*)existData.DataPointer;
+                *pBytesPtr = (uint)existData.DataSize;
+                return 0; // S_OK
+            }
+
+            var bytes = AssemblyResourceUtils.GetShaderBytes(fileName);
+            if (bytes is null)
+            {
+                return unchecked((int)0x80070002); // HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
+            }
+
+            var nativeMem = NativeMemory.AllocZeroed((nuint)bytes.Length);
+            fixed (byte* pBytes = bytes)
+            {
+                NativeMemory.Copy(pBytes, nativeMem, (nuint)bytes.Length);
+            }
+
+            _openedShaderSources[fileName] = ((nint)nativeMem, bytes.Length);
+
+            *ppData = nativeMem;
+            *pBytesPtr = (uint)bytes.Length;
+            return 0; // S_OK
+        }
+
+        private int D3DIncludeClose(ID3DInclude* self, void* pData)
+        {
+            var dataPointer = (nint)pData;
+            var item = _openedShaderSources.FirstOrDefault(kv => kv.Value.DataPointer == dataPointer);
+            if (item.Key is not null)
+            {
+                NativeMemory.Free((void*)dataPointer);
+                _openedShaderSources.Remove(item.Key);
+            }
+
+            return 0; // S_OK
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -80,7 +143,17 @@ namespace EleCho.AetherTex
             TextureFormat format, int tileWidth, int tileHeight, int rows, int columns,
             IEnumerable<string> sources)
         {
+            if (format.IsBayer())
+            {
+                if (tileWidth % 2 != 0 ||
+                    tileHeight % 2 != 0)
+                {
+                    throw new ArgumentException("Tile width and height must be even numbers for Bayer formats");
+                }
+            }
+
             _sources = sources.ToArray();
+            _openedShaderSources = new();
 
             Options = new AetherTexImageOptions(this);
             Format = format;
@@ -94,6 +167,15 @@ namespace EleCho.AetherTex
                 new Vector2(Width, 0),
                 new Vector2(Width, Height),
                 new Vector2(0, Height));
+
+            var includeFunctions = (nint*)NativeMemory.Alloc((nuint)(sizeof(nint) * 2));
+            includeFunctions[0] = Marshal.GetFunctionPointerForDelegate(D3DIncludeOpen);
+            includeFunctions[1] = Marshal.GetFunctionPointerForDelegate(D3DIncludeClose);
+
+            var include = (ID3DInclude*)NativeMemory.Alloc((nuint)sizeof(ID3DInclude));
+            include[0] = new ID3DInclude((void**)includeFunctions);
+
+            _include = new ComPtr<ID3DInclude>(include);
 
             _texture2DDesc = new Texture2DDesc()
             {
@@ -150,7 +232,7 @@ namespace EleCho.AetherTex
             _vertexShaderBlob = DxUtils.Compile(_compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"), new Dictionary<string, string>()
             {
                 ["SourceCount"] = _sources.Length.ToString(),
-            });
+            }, _include);
 
             _vertexShader = DxUtils.CreateVertexShader(_device, _vertexShaderBlob);
 
@@ -473,6 +555,16 @@ namespace EleCho.AetherTex
                 {
                     // TODO: 释放托管状态(托管对象)
                 }
+
+                foreach (var openedShaderSource in _openedShaderSources.Values)
+                {
+                    NativeMemory.Free((void*)openedShaderSource.DataPointer);
+                }
+                _openedShaderSources.Clear();
+
+                var includeValue = *_include.Handle;
+                NativeMemory.Free(includeValue.LpVtbl);
+                NativeMemory.Free(_include.Handle);
 
                 _deviceContext.Dispose();
                 _samplerState.Dispose();

@@ -17,6 +17,8 @@ using static System.Net.Mime.MediaTypeNames;
 using Microsoft.Win32;
 using System.IO;
 using BitMiracle.LibTiff.Classic;
+using ImageMagick;
+using System.Windows.Media.Media3D;
 
 namespace AetherTex.Viewer
 {
@@ -194,15 +196,66 @@ namespace AetherTex.Viewer
                 return;
             }
 
+            if (!File.Exists(importImageDialog.FilePath))
+            {
+                MessageBox.Show(this, $"File not exists: {importImageDialog.FilePath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             if (CurrentTexture.Format == TextureFormat.Float32)
             {
-                var depth = ReadTiledFloat32Tiff(importImageDialog.FilePath, out var width, out var height);
+                var depth = ReadTiledFloat32Tiff(importImageDialog.FilePath!, out var width, out var height);
 
                 unsafe
                 {
-                    fixed(float* ptr = depth)
+                    fixed (float* ptr = depth)
                     {
                         CurrentTexture.Write(new TextureData(TextureFormat.Float32, width, height, (nint)ptr, width * sizeof(float)), importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+                    }
+                }
+            }
+            else if (CurrentTexture.Format == TextureFormat.Gray16)
+            {
+                using var image = new MagickImage(importImageDialog.FilePath!);
+                if (image.ColorSpace != ColorSpace.Gray)
+                {
+                    MessageBox.Show(this, $"NotSupport {image.ColorSpace}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                if (image.Depth == 16)
+                {
+                    var pixels = image.GetPixels().ToArray();
+                    unsafe
+                    {
+                        fixed (void* ptr = pixels)
+                        {
+                            var textureData = new TextureData(TextureFormat.Gray16, (int)image.Width, (int)image.Height, (nint)ptr, (int)(image.Width * sizeof(ushort)));
+                            CurrentTexture.Write(textureData, importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+                        }
+                    }
+                }
+                else if (image.Depth == 8)
+                {
+                    unsafe
+                    {
+                        using var bitmap = SKBitmap.Decode(importImageDialog.FilePath);
+                        ushort[] gray16Data = new ushort[bitmap.Width * bitmap.Height];
+                        var p = (byte*)bitmap.GetPixels();
+
+                        // 3. 遍历每个像素，转换并写入16位数组
+                        for (int y = 0; y < bitmap.Width; y++)
+                        {
+                            for (int x = 0; x < bitmap.Height; x++)
+                            {
+                                var origin = p[y * bitmap.RowBytes + x];
+                                gray16Data[y * bitmap.Width + x] = (ushort)(origin << 8 | origin);
+                            }
+                        }
+                        fixed(void* ptr = gray16Data)
+                        {
+                            var textureData = new TextureData(TextureFormat.Gray16, bitmap.Width, bitmap.Height, (nint)ptr, bitmap.Width * sizeof(ushort));
+                            CurrentTexture.Write(textureData, importImageDialog.TargetSource, importImageDialog.Column, importImageDialog.Row);
+                        }
                     }
                 }
             }

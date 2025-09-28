@@ -8,6 +8,11 @@
         Gray8,
         Gray16,
 
+        BayerRggb,
+        BayerGrbg,
+        BayerBggr,
+        BayerGbrg,
+
         Float32,
     }
 }
