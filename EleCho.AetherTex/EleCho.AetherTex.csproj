@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Shaders\AetherTexImageI422.hlsl" />
     <EmbeddedResource Include="Shaders\AetherTexImageI444.hlsl" />
     <EmbeddedResource Include="Shaders\AetherTexImageBayerBggr.hlsl" />
     <EmbeddedResource Include="Shaders\AetherTexImageBayerGrbg.hlsl" />

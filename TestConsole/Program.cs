@@ -128,6 +128,45 @@ internal class Program
         }
     }
 
+    private static unsafe void AsYuv422p(TextureData data, Action<TextureData> action)
+    {
+        var yDataStream = new MemoryStream();
+        var uDataStream = new MemoryStream();
+        var vDataStream = new MemoryStream();
+
+        for (int y = 0; y < data.Height; y++)
+        {
+            for (int x = 0; x < data.Width; x++)
+            {
+                var pPixel = (byte*)(data.BaseAddress + data.RowBytes * y + 4 * x);
+                RgbToYuv(pPixel[2], pPixel[1], pPixel[0], out var colorY, out var colorU, out var colorV);
+
+                yDataStream.WriteByte(colorY);
+
+                if (x % 2 == 0)
+                {
+                    uDataStream.WriteByte(colorU);
+                    vDataStream.WriteByte(colorV);
+                }
+            }
+        }
+
+        yDataStream.Seek(0, SeekOrigin.Begin);
+        uDataStream.Seek(0, SeekOrigin.Begin);
+        vDataStream.Seek(0, SeekOrigin.Begin);
+        var yuvDataStream = new MemoryStream();
+        yDataStream.CopyTo(yuvDataStream);
+        uDataStream.CopyTo(yuvDataStream);
+        vDataStream.CopyTo(yuvDataStream);
+
+        var yuvData = yuvDataStream.ToArray();
+
+        fixed (byte* pYuv420Data = yuvData)
+        {
+            action?.Invoke(new TextureData(TextureFormat.I422, data.Width, data.Height, (nint)pYuv420Data, data.Width));
+        }
+    }
+
     private static unsafe void AsYuv444p(TextureData data, Action<TextureData> action)
     {
         var yDataStream = new MemoryStream();
@@ -192,8 +231,8 @@ internal class Program
     {
         var bitmap = SKBitmap.Decode("test_small.jpg");
         var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-        var megaTexture = new AetherTexImage(TextureFormat.I444, 540, 540, 2, 2);
-        AsYuv444p(GetTextureData(bitmap), data =>
+        var megaTexture = new AetherTexImage(TextureFormat.I422, 540, 540, 2, 2);
+        AsYuv422p(GetTextureData(bitmap), data =>
         {
             megaTexture.Write(data, 0, 0);
             megaTexture.Write(data, 1, 0);

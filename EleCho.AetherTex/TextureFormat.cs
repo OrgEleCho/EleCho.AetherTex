@@ -19,6 +19,11 @@
         I444,
 
         /// <summary>
+        /// YUV422, I422, Planar
+        /// </summary>
+        I422,
+
+        /// <summary>
         /// YUV420, I420, Planar
         /// </summary>
         I420,

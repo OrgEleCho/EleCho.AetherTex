@@ -82,6 +82,7 @@ namespace EleCho.AetherTex
                 TextureFormat.BayerGrbg => "AetherTexImageBayerGrbg.hlsl",
                 TextureFormat.BayerGbrg => "AetherTexImageBayerGbrg.hlsl",
                 TextureFormat.I444 => "AetherTexImageI444.hlsl",
+                TextureFormat.I422 => "AetherTexImageI422.hlsl",
                 TextureFormat.I420 => "AetherTexImageI420.hlsl",
                 _ => "AetherTexImage.hlsl",
             };
@@ -103,6 +104,7 @@ namespace EleCho.AetherTex
                 TextureFormat.BayerGrbg => Silk.NET.DXGI.Format.FormatR8Unorm,
 
                 TextureFormat.I444 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.I422 => Silk.NET.DXGI.Format.FormatR8Unorm,
                 TextureFormat.I420 => Silk.NET.DXGI.Format.FormatR8Unorm,
 
                 TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
@@ -116,6 +118,19 @@ namespace EleCho.AetherTex
                 {
                     Width = (uint)width,
                     Height = (uint)(height * 3),
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = dxPixelFormat,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
+                TextureFormat.I422 => new Texture2DDesc()
+                {
+                    Width = (uint)width,
+                    Height = (uint)(height * 2),
                     ArraySize = (uint)arraySize,
                     BindFlags = (uint)BindFlag.ShaderResource,
                     CPUAccessFlags = 0,
@@ -538,7 +553,7 @@ namespace EleCho.AetherTex
                 throw new InvalidOperationException("Data format not match");
             }
 
-            if (Format is TextureFormat.I420 or TextureFormat.I444)
+            if (Format is TextureFormat.I420 or TextureFormat.I422 or TextureFormat.I444)
             {
                 if (dataWidth != TileWidth ||
                     dataHeight != TileHeight)
@@ -561,6 +576,7 @@ namespace EleCho.AetherTex
             depthPitch = Format switch
             {
                 TextureFormat.I444 => dataRowBytes * (dataHeight * 3),
+                TextureFormat.I422 => dataRowBytes * (dataHeight * 2),
                 TextureFormat.I420 => dataRowBytes * (dataHeight + dataHeight / 2),
                 _ => dataRowBytes * dataHeight,
             };
@@ -568,6 +584,7 @@ namespace EleCho.AetherTex
             return Format switch
             {
                 TextureFormat.I444 => new Box(0, 0, 0, (uint)dataWidth, (uint)(dataHeight * 3), 1),
+                TextureFormat.I422 => new Box(0, 0, 0, (uint)dataWidth, (uint)(dataHeight * 2), 1),
                 TextureFormat.I420 => new Box(0, 0, 0, (uint)dataWidth, (uint)(dataHeight + dataHeight / 2), 1),
                 _ => new Box(0, 0, 0, (uint)Math.Min(TileWidth, dataWidth), (uint)Math.Min(TileHeight, dataHeight), 1)
             };
