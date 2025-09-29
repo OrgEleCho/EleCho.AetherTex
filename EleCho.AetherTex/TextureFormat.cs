@@ -13,6 +13,16 @@
         BayerBggr,
         BayerGbrg,
 
+        /// <summary>
+        /// YUV444, I444, Planar
+        /// </summary>
+        I444,
+
+        /// <summary>
+        /// YUV420, I420, Planar
+        /// </summary>
+        I420,
+
         Float32,
     }
 }

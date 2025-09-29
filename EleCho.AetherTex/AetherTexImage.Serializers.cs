@@ -15,6 +15,25 @@ namespace EleCho.AetherTex
             private SerializerV1() { }
 
             public static SerializerV1 Instance { get; } = new();
+            private static int GetPixelBytes(TextureFormat format)
+            {
+                return format switch
+                {
+                    TextureFormat.Bgra8888 => 4,
+                    TextureFormat.Rgba8888 => 4,
+
+                    TextureFormat.Gray8 => 1,
+                    TextureFormat.Gray16 => 2,
+                    TextureFormat.Float32 => 4,
+
+                    TextureFormat.BayerRggb => 1,
+                    TextureFormat.BayerBggr => 1,
+                    TextureFormat.BayerGbrg => 1,
+                    TextureFormat.BayerGrbg => 1,
+
+                    _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported texture format")
+                };
+            }
 
             public void Serialize(AetherTexImage image, BinaryWriter writer)
             {
@@ -31,7 +50,7 @@ namespace EleCho.AetherTex
                     writer.Write(source);
                 }
 
-                var pixelBytes = image.Format.GetPixelBytes();
+                var pixelBytes = GetPixelBytes(image.Format);
                 var tileBufferArray = new byte[pixelBytes * image.TileWidth * image.TileHeight];
 
                 fixed (byte* pTileBufferArray = tileBufferArray)
@@ -72,7 +91,7 @@ namespace EleCho.AetherTex
 
                 var image = new AetherTexImage(format, (int)tileWidth, (int)tileHeight, (int)columns, (int)rows, sources);
 
-                var pixelBytes = format.GetPixelBytes();
+                var pixelBytes = GetPixelBytes(format);
                 var tileBufferArray = new byte[pixelBytes * tileWidth * tileHeight];
 
                 fixed (byte* pTileBufferArray = tileBufferArray)

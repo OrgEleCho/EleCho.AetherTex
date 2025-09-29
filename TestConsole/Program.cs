@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Numerics;
 using EleCho.AetherTex;
 using SkiaSharp;
@@ -11,6 +10,39 @@ internal class Program
     private static TextureData GetTextureData(SKBitmap bitmap)
     {
         return new TextureData(TextureFormat.Bgra8888, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
+    }
+    private static void RgbToYuv(byte r, byte g, byte b, out byte y, out byte u, out byte v)
+    {
+        // 根据常见的BT.601标准将RGB转换为YUV
+        double dY = 0.29882 * r + 0.58681 * g + 0.114363 * b;
+        double dU = -0.172485 * r - 0.338718 * g + 0.511207 * b + 128;
+        double dV = 0.51155 * r - 0.42811 * g - 0.08343 * b + 128;
+
+        // 将计算结果分别限制在[0, 255]范围内并转换为字节
+        y = (byte)Math.Clamp((int)Math.Round(dY), 0, 255);
+        u = (byte)Math.Clamp((int)Math.Round(dU), 0, 255);
+        v = (byte)Math.Clamp((int)Math.Round(dV), 0, 255);
+    }
+
+    private static unsafe void MakeGradient(int width, int height, Action<TextureData> action)
+    {
+        byte[] data = new byte[width * height * 4];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                var baseOffset = width * 4 * y + 4 * x;
+                data[baseOffset] = (byte)(x % 255);
+                data[baseOffset + 1] = (byte)(y % 255);
+                data[baseOffset + 2] = (byte)(y % 255);
+                data[baseOffset + 3] = (byte)255;
+            }
+        }
+
+        fixed (byte* pData = data)
+        {
+            action?.Invoke(new TextureData(TextureFormat.Bgra8888, width, height, (nint)pData, width * 4));
+        }
     }
 
     private static unsafe void AsBayer(TextureData data, TextureFormat format, Action<TextureData> action)
@@ -56,6 +88,81 @@ internal class Program
         }
     }
 
+    private static unsafe void AsYuv420p(TextureData data, Action<TextureData> action)
+    {
+        var yDataStream = new MemoryStream();
+        var uDataStream = new MemoryStream();
+        var vDataStream = new MemoryStream();
+
+        for (int y = 0; y < data.Height; y++)
+        {
+            for (int x = 0; x < data.Width; x++)
+            {
+                var pPixel = (byte*)(data.BaseAddress + data.RowBytes * y + 4 * x);
+                RgbToYuv(pPixel[2], pPixel[1], pPixel[0], out var colorY, out var colorU, out var colorV);
+
+                yDataStream.WriteByte(colorY);
+
+                if (x % 2 == 0 &&
+                    y % 2 == 0)
+                {
+                    uDataStream.WriteByte(colorU);
+                    vDataStream.WriteByte(colorV);
+                }
+            }
+        }
+
+        yDataStream.Seek(0, SeekOrigin.Begin);
+        uDataStream.Seek(0, SeekOrigin.Begin);
+        vDataStream.Seek(0, SeekOrigin.Begin);
+        var yuvDataStream = new MemoryStream();
+        yDataStream.CopyTo(yuvDataStream);
+        uDataStream.CopyTo(yuvDataStream);
+        vDataStream.CopyTo(yuvDataStream);
+
+        var yuvData = yuvDataStream.ToArray();
+
+        fixed (byte* pYuv420Data = yuvData)
+        {
+            action?.Invoke(new TextureData(TextureFormat.I420, data.Width, data.Height, (nint)pYuv420Data, data.Width));
+        }
+    }
+
+    private static unsafe void AsYuv444p(TextureData data, Action<TextureData> action)
+    {
+        var yDataStream = new MemoryStream();
+        var uDataStream = new MemoryStream();
+        var vDataStream = new MemoryStream();
+
+        for (int y = 0; y < data.Height; y++)
+        {
+            for (int x = 0; x < data.Width; x++)
+            {
+                var pPixel = (byte*)(data.BaseAddress + data.RowBytes * y + 4 * x);
+                RgbToYuv(pPixel[2], pPixel[1], pPixel[0], out var colorY, out var colorU, out var colorV);
+
+                yDataStream.WriteByte(colorY);
+                uDataStream.WriteByte(colorU);
+                vDataStream.WriteByte(colorV);
+            }
+        }
+
+        yDataStream.Seek(0, SeekOrigin.Begin);
+        uDataStream.Seek(0, SeekOrigin.Begin);
+        vDataStream.Seek(0, SeekOrigin.Begin);
+        var yuvDataStream = new MemoryStream();
+        yDataStream.CopyTo(yuvDataStream);
+        uDataStream.CopyTo(yuvDataStream);
+        vDataStream.CopyTo(yuvDataStream);
+
+        var yuvData = yuvDataStream.ToArray();
+
+        fixed (byte* pYuv420Data = yuvData)
+        {
+            action?.Invoke(new TextureData(TextureFormat.I444, data.Width, data.Height, (nint)pYuv420Data, data.Width));
+        }
+    }
+
     static void TestFeature()
     {
         var bitmap = SKBitmap.Decode("test.jpg");
@@ -74,6 +181,31 @@ internal class Program
             new Vector2(2048, 0),
             new Vector2(2048, 2048),
             new Vector2(0, 2048));
+
+        using var output = File.Create("output.png");
+        var source = megaTexture.CreateSource("color.rgb");
+        megaTexture.Read(source, quad, GetTextureData(bitmap2));
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
+    static void TestYuvFeature()
+    {
+        var bitmap = SKBitmap.Decode("test_small.jpg");
+        var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var megaTexture = new AetherTexImage(TextureFormat.I444, 540, 540, 2, 2);
+        AsYuv444p(GetTextureData(bitmap), data =>
+        {
+            megaTexture.Write(data, 0, 0);
+            megaTexture.Write(data, 1, 0);
+            megaTexture.Write(data, 0, 1);
+            megaTexture.Write(data, 1, 1);
+        });
+
+        var quad = new QuadVectors(
+            new Vector2(0, 0),
+            new Vector2(1080, 0),
+            new Vector2(1080, 1080),
+            new Vector2(0, 1080));
 
         using var output = File.Create("output.png");
         var source = megaTexture.CreateSource("color.rgb");
@@ -113,7 +245,7 @@ internal class Program
 
     private static void Main(string[] args)
     {
-        TestFeature();
+        TestYuvFeature();
 
         Console.WriteLine("Hello, World!");
     }

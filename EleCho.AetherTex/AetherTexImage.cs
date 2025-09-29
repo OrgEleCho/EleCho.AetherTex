@@ -9,6 +9,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
 using Silk.NET.Direct3D11;
 using Silk.NET.DXGI;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EleCho.AetherTex
 {
@@ -21,6 +22,9 @@ namespace EleCho.AetherTex
 
         private readonly string[] _sources;
         private readonly Dictionary<string, (nint DataPointer, int DataSize)> _openedShaderSources;
+
+        private Delegate _funcIncludeOpen;
+        private Delegate _funcIncludeClose;
 
         private ExprSource? _defaultSource;
 
@@ -77,7 +81,76 @@ namespace EleCho.AetherTex
                 TextureFormat.BayerBggr => "AetherTexImageBayerBggr.hlsl",
                 TextureFormat.BayerGrbg => "AetherTexImageBayerGrbg.hlsl",
                 TextureFormat.BayerGbrg => "AetherTexImageBayerGbrg.hlsl",
+                TextureFormat.I444 => "AetherTexImageI444.hlsl",
+                TextureFormat.I420 => "AetherTexImageI420.hlsl",
                 _ => "AetherTexImage.hlsl",
+            };
+        }
+
+        private static Texture2DDesc GetTextureDesc(TextureFormat format, int width, int height, int arraySize)
+        {
+            var dxPixelFormat = format switch
+            {
+                TextureFormat.Bgra8888 => Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm,
+                TextureFormat.Rgba8888 => Silk.NET.DXGI.Format.FormatR8G8B8A8Unorm,
+
+                TextureFormat.Gray8 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.Gray16 => Silk.NET.DXGI.Format.FormatR16Unorm,
+
+                TextureFormat.BayerRggb => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.BayerBggr => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.BayerGbrg => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.BayerGrbg => Silk.NET.DXGI.Format.FormatR8Unorm,
+
+                TextureFormat.I444 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.I420 => Silk.NET.DXGI.Format.FormatR8Unorm,
+
+                TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported texture format")
+            };
+
+            return format switch
+            {
+                TextureFormat.I444 => new Texture2DDesc()
+                {
+                    Width = (uint)width,
+                    Height = (uint)(height * 3),
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = dxPixelFormat,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
+                TextureFormat.I420 => new Texture2DDesc()
+                {
+                    Width = (uint)width,
+                    Height = (uint)(height + height / 2),
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = dxPixelFormat,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
+                _ => new Texture2DDesc()
+                {
+                    Width = (uint)width,
+                    Height = (uint)height,
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = dxPixelFormat,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                }
             };
         }
 
@@ -169,27 +242,17 @@ namespace EleCho.AetherTex
                 new Vector2(0, Height));
 
             var includeFunctions = (nint*)NativeMemory.Alloc((nuint)(sizeof(nint) * 2));
-            includeFunctions[0] = Marshal.GetFunctionPointerForDelegate(D3DIncludeOpen);
-            includeFunctions[1] = Marshal.GetFunctionPointerForDelegate(D3DIncludeClose);
+            _funcIncludeOpen = D3DIncludeOpen;
+            _funcIncludeClose = D3DIncludeClose;
+            includeFunctions[0] = Marshal.GetFunctionPointerForDelegate(_funcIncludeOpen);
+            includeFunctions[1] = Marshal.GetFunctionPointerForDelegate(_funcIncludeClose);
 
             var include = (ID3DInclude*)NativeMemory.Alloc((nuint)sizeof(ID3DInclude));
             include[0] = new ID3DInclude((void**)includeFunctions);
 
             _include = new ComPtr<ID3DInclude>(include);
 
-            _texture2DDesc = new Texture2DDesc()
-            {
-                Width = (uint)tileWidth,
-                Height = (uint)tileHeight,
-                ArraySize = (uint)(rows * columns),
-                BindFlags = (uint)BindFlag.ShaderResource,
-                CPUAccessFlags = 0,
-                Format = format.ToDxFormat(),
-                MipLevels = 1,
-                MiscFlags = 0,
-                SampleDesc = new SampleDesc(1, 0),
-                Usage = Usage.Default,
-            };
+            _texture2DDesc = GetTextureDesc(format, tileWidth, tileHeight, rows * columns);
 
             _vertexBufferDesc = new BufferDesc()
             {
@@ -348,6 +411,19 @@ namespace EleCho.AetherTex
                 throw new ArgumentException("Source is not from current texture");
             }
 
+            var dxPixelFormat = buffer.Format switch
+            {
+                TextureFormat.Bgra8888 => Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm,
+                TextureFormat.Rgba8888 => Silk.NET.DXGI.Format.FormatR8G8B8A8Unorm,
+
+                TextureFormat.Gray8 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.Gray16 => Silk.NET.DXGI.Format.FormatR16Unorm,
+
+                TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(buffer), buffer, "Unsupported texture format")
+            };
+
             var viewport = new Viewport(0, 0, buffer.Width, buffer.Height, 0, 1);
             var samplerFilter = GetSamplerFilter();
 
@@ -389,7 +465,7 @@ namespace EleCho.AetherTex
                     ArraySize = 1,
                     BindFlags = (uint)BindFlag.RenderTarget,
                     CPUAccessFlags = 0,
-                    Format = buffer.Format.ToDxFormat(),
+                    Format = dxPixelFormat,
                     MipLevels = 1,
                     MiscFlags = 0,
                     SampleDesc = new SampleDesc(1, 0),
@@ -455,9 +531,52 @@ namespace EleCho.AetherTex
         public void Read(QuadVectors quad, TextureData buffer)
             => Read(DefaultSource, quad, buffer);
 
+        private void EnsureCanWrite(TextureFormat dataFormat, int dataWidth, int dataHeight)
+        {
+            if (dataFormat != Format)
+            {
+                throw new InvalidOperationException("Data format not match");
+            }
+
+            if (Format is TextureFormat.I420 or TextureFormat.I444)
+            {
+                if (dataWidth != TileWidth ||
+                    dataHeight != TileHeight)
+                {
+                    throw new InvalidOperationException("Data size must equals tile size if texture format is yuv planar");
+                }
+            }
+            else if (Format.IsBayer())
+            {
+                if (dataWidth % 2 != 0 ||
+                    dataHeight % 2 != 0)
+                {
+                    throw new InvalidOperationException("Invalid bayer data, data size must be even number");
+                }
+            }
+        }
+
+        private Box GetBoxForWriting(int dataWidth, int dataHeight, nint dataRowBytes, out nint depthPitch)
+        {
+            depthPitch = Format switch
+            {
+                TextureFormat.I444 => dataRowBytes * (dataHeight * 3),
+                TextureFormat.I420 => dataRowBytes * (dataHeight + dataHeight / 2),
+                _ => dataRowBytes * dataHeight,
+            };
+
+            return Format switch
+            {
+                TextureFormat.I444 => new Box(0, 0, 0, (uint)dataWidth, (uint)(dataHeight * 3), 1),
+                TextureFormat.I420 => new Box(0, 0, 0, (uint)dataWidth, (uint)(dataHeight + dataHeight / 2), 1),
+                _ => new Box(0, 0, 0, (uint)Math.Min(TileWidth, dataWidth), (uint)Math.Min(TileHeight, dataHeight), 1)
+            };
+        }
+
         public void Write(TextureData data, int sourceIndex, int column, int row)
         {
             EnsureNotDisposed();
+            EnsureCanWrite(data.Format, data.Width, data.Height);
 
             if (sourceIndex < 0 ||
                 sourceIndex >= _textures.Length)
@@ -468,8 +587,8 @@ namespace EleCho.AetherTex
             var texture = _textures[sourceIndex];
             var subResource = (uint)(row * Columns + column);
 
-            var box = new Box(0, 0, 0, (uint)Math.Min(TileWidth, data.Width), (uint)Math.Min(TileHeight, data.Height), 1);
-            _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)(data.RowBytes * data.Height));
+            var box = GetBoxForWriting(data.Width, data.Height, data.RowBytes, out var depthPitch);
+            _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)depthPitch);
         }
 
         public void Write(TextureData data, string source, int column, int row)

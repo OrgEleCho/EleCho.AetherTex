@@ -134,24 +134,29 @@ namespace EleCho.AetherTex.Utilities
                 }
             }
 
-            fixed (byte* pShaderSource = shaderSource)
+            try
             {
-                ComPtr<ID3D10Blob> shader = default;
-                ComPtr<ID3D10Blob> errorMsgs = null;
-                var ok = compiler.Compile(pShaderSource, (nuint)(shaderSource.Length), sourceName, pMacros, include, entryPoint, target, 0, 0, ref shader, ref errorMsgs);
-                if (ok != 0 &&
-                    errorMsgs.Handle != null)
+                fixed (byte* pShaderSource = shaderSource)
                 {
-                    string error = Encoding.ASCII.GetString((byte*)errorMsgs.GetBufferPointer(), (int)errorMsgs.GetBufferSize());
-                    throw new InvalidOperationException(error);
-                }
+                    ComPtr<ID3D10Blob> shader = default;
+                    ComPtr<ID3D10Blob> errorMsgs = null;
+                    var ok = compiler.Compile(pShaderSource, (nuint)(shaderSource.Length), sourceName, pMacros, include, entryPoint, target, 0, 0, ref shader, ref errorMsgs);
+                    if (ok != 0 &&
+                        errorMsgs.Handle != null)
+                    {
+                        string error = Encoding.ASCII.GetString((byte*)errorMsgs.GetBufferPointer(), (int)errorMsgs.GetBufferSize());
+                        throw new InvalidOperationException(error);
+                    }
 
+                    return shader;
+                }
+            }
+            finally
+            {
                 if (pMacros is not null)
                 {
                     NativeMemory.Free(pMacros);
                 }
-
-                return shader;
             }
         }
 
