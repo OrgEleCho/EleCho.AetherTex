@@ -230,6 +230,66 @@ internal class Program
         bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
     }
 
+    static void TestEdgeFeature()
+    {
+        var bitmap = SKBitmap.Decode("test.jpg");
+        var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var megaTexture = new AetherTexImage(TextureFormat.Bgra8888, 1024, 1024, 256, 2, 2);
+        megaTexture.Write(GetTextureData(bitmap), 0, 0);
+        megaTexture.Write(GetTextureData(bitmap), 0, 1);
+        megaTexture.Write(GetTextureData(bitmap), 1, 0);
+        megaTexture.Write(GetTextureData(bitmap), 1, 1);
+
+        var quad = megaTexture.FullQuad;
+
+        using var output = File.Create("output.png");
+        var source = megaTexture.CreateSource("color.rgb");
+        megaTexture.Read(source, quad, GetTextureData(bitmap2));
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
+    static void TestBayerEdgeFeature()
+    {
+        var bitmap = SKBitmap.Decode("test.jpg");
+        var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var megaTexture = new AetherTexImage(TextureFormat.BayerRggb, 1024, 1024, 256, 2, 2);
+        AsBayer(GetTextureData(bitmap), TextureFormat.BayerRggb, data =>
+        {
+            megaTexture.Write(data, 0, 0);
+            megaTexture.Write(data, 1, 0);
+            megaTexture.Write(data, 0, 1);
+            megaTexture.Write(data, 1, 1);
+        });
+
+        var quad = megaTexture.FullQuad;
+
+        using var output = File.Create("output.png");
+        var source = megaTexture.CreateSource("color.rgb");
+        megaTexture.Read(source, quad, GetTextureData(bitmap2));
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
+    static void TestYuvEdgeFeature()
+    {
+        var bitmap = SKBitmap.Decode("test.jpg");
+        var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var megaTexture = new AetherTexImage(TextureFormat.I420, 1080, 1080, 256, 2, 2);
+        AsYuv420p(GetTextureData(bitmap), data =>
+        {
+            megaTexture.Write(data, 0, 0);
+            megaTexture.Write(data, 1, 0);
+            megaTexture.Write(data, 0, 1);
+            megaTexture.Write(data, 1, 1);
+        });
+
+        var quad = megaTexture.FullQuad;
+
+        using var output = File.Create("output.png");
+        var source = megaTexture.CreateSource("color.rgb");
+        megaTexture.Read(source, quad, GetTextureData(bitmap2));
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
     static void TestBayerFeature()
     {
         var bitmap = SKBitmap.Decode("test.jpg");
@@ -312,7 +372,7 @@ internal class Program
 
     private static void Main(string[] args)
     {
-        TestFeature();
+        TestYuvEdgeFeature();
 
         Console.WriteLine("Hello, World!");
     }

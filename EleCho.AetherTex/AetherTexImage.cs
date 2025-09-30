@@ -61,11 +61,12 @@ namespace EleCho.AetherTex
         public TextureFormat Format { get; }
         public int TileWidth { get; }
         public int TileHeight { get; }
+        public int EdgeSize { get; }
         public int Rows { get; }
         public int Columns { get; }
 
-        public int Width => TileWidth * Columns;
-        public int Height => TileHeight * Rows;
+        public int Width => (TileWidth - EdgeSize - EdgeSize) * Columns;
+        public int Height => (TileHeight - EdgeSize - EdgeSize) * Rows;
 
         public IReadOnlyList<string> Sources { get; }
 
@@ -229,7 +230,7 @@ namespace EleCho.AetherTex
         /// <param name="sources"></param>
         /// <exception cref="InvalidOperationException"></exception>
         public AetherTexImage(
-            TextureFormat format, int tileWidth, int tileHeight, int rows, int columns,
+            TextureFormat format, int tileWidth, int tileHeight, int edgeSize, int rows, int columns,
             IEnumerable<string> sources)
         {
             if (format.IsBayer())
@@ -248,9 +249,11 @@ namespace EleCho.AetherTex
             Format = format;
             TileWidth = tileWidth;
             TileHeight = tileHeight;
+            EdgeSize = edgeSize;
             Rows = rows;
             Columns = columns;
             Sources = _sources.AsReadOnly();
+
             FullQuad = new QuadVectors(
                 new Vector2(0, 0),
                 new Vector2(Width, 0),
@@ -349,6 +352,39 @@ namespace EleCho.AetherTex
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="tileWidth"></param>
+        /// <param name="tileHeight"></param>
+        /// <param name="edgeSize"></param>
+        /// <param name="rows"></param>
+        /// <param name="columns"></param>
+        public AetherTexImage(
+            TextureFormat format, int tileWidth, int tileHeight, int edgeSize, int rows, int columns)
+            : this(format, tileWidth, tileHeight, edgeSize, rows, columns, ["color"])
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="tileWidth"></param>
+        /// <param name="tileHeight"></param>
+        /// <param name="rows"></param>
+        /// <param name="columns"></param>
+        /// <param name="sources"></param>
+        public AetherTexImage(
+            TextureFormat format, int tileWidth, int tileHeight, int rows, int columns,
+            IEnumerable<string> sources)
+            : this(format, tileWidth, tileHeight, 0, rows, columns, sources)
+        {
+
         }
 
         /// <summary>

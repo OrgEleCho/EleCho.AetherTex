@@ -1,3 +1,4 @@
+#include <Core.hlsl>
 #include <Common.hlsl>
 #include <CommonForYuv.hlsl>
 
@@ -23,6 +24,10 @@
 
 #ifndef TileColumns
 #define TileColumns 2
+#endif
+
+#ifndef EdgeSize
+#define EdgeSize 0
 #endif
 
 Texture2DArray _input[SourceCount];
@@ -56,9 +61,15 @@ float4 sample_source(int sourceIndex, float2 texcoord)
         TileWidth,
         TileHeight);
     
+    const int2 tileClientSize = int2(
+        TileWidth - EdgeSize - EdgeSize,
+        TileWidth - EdgeSize - EdgeSize);
+    
     const int2 tileTextureSize = int2(
         TileWidth,
         TileHeight * 3);
+    
+    discard_if_out_of_range(tileSize, EdgeSize, TileRows, TileColumns, texcoord);
 
     const int2 xy = int2(
         (int) texcoord.x,
@@ -66,12 +77,12 @@ float4 sample_source(int sourceIndex, float2 texcoord)
     
     Texture2DArray tiles = _input[sourceIndex];
     int2 tileXY = int2(
-        xy.x / tileSize.x,
-        xy.y / tileSize.y);
+        xy.x / tileClientSize.x,
+        xy.y / tileClientSize.y);
     
     int2 xyInTile = int2(
-        xy.x % tileSize.x,
-        xy.y % tileSize.y);
+        xy.x % tileClientSize.x + EdgeSize,
+        xy.y % tileClientSize.y + EdgeSize);
     
     int tileIndex = tileXY.y * TileColumns + tileXY.x;
     
