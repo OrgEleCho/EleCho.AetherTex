@@ -50,6 +50,7 @@ namespace EleCho.AetherTex
         // rendering cache
         private int _lastRenderWidth;
         private int _lastRenderHeight;
+        private TransformMatrix? _lastRenderTransform;
         private ComPtr<ID3D11Texture2D> _renderTarget;
         private ComPtr<ID3D11RenderTargetView> _renderTargetView;
 
@@ -430,6 +431,13 @@ namespace EleCho.AetherTex
 
         private void UpdateTransform(TransformMatrix transformMatrix)
         {
+            if (_lastRenderTransform == transformMatrix)
+            {
+                return;
+            }
+
+            _lastRenderTransform = transformMatrix;
+
             // 因为需要对图像进行变换, 而着色器里面是对采样点位置做变换
             // 所以这里需要向 DX 传入逆矩阵
             transformMatrix.Invert();
