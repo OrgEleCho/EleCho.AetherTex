@@ -8,7 +8,7 @@
 
             public FunctionVariable(VectorFunction function)
             {
-                ArgumentNullException.ThrowIfNull(function);
+                _ = function ?? throw new ArgumentNullException(nameof(function));
 
                 Name = function.Name;
                 _function = function;
@@ -36,9 +36,9 @@
 
             public VectorVariable(string name, string nameInShader, char[] componentNames, ColorSpace colorSpace)
             {
-                ArgumentNullException.ThrowIfNull(name);
-                ArgumentNullException.ThrowIfNull(nameInShader);
-                ArgumentNullException.ThrowIfNull(componentNames);
+                _ = name ?? throw new ArgumentNullException(nameof(name));
+                _ = nameInShader ?? throw new ArgumentNullException(nameof(nameInShader));
+                _ = componentNames ?? throw new ArgumentNullException(nameof(componentNames));
 
                 if (componentNames.Length == 0 ||
                     componentNames.Length > 4)

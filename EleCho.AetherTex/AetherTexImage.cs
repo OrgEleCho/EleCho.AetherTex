@@ -9,7 +9,6 @@ using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
 using Silk.NET.Direct3D11;
 using Silk.NET.DXGI;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EleCho.AetherTex
 {
@@ -278,14 +277,12 @@ namespace EleCho.AetherTex
                 Usage = Usage.Dynamic
             };
 
-            ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc
-            {
-                Format = _texture2DDesc.Format,
-                ViewDimension = D3DSrvDimension.D3D11SrvDimensionTexture2D,
-            };
-
-            inputTextureShaderResourceViewDesc.Texture2D.MipLevels = 1;
-            inputTextureShaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc(
+                format: _texture2DDesc.Format,
+                viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2D,
+                texture2D: new Tex2DSrv(
+                    mipLevels: 1,
+                    mostDetailedMip: 0));
 
             _api = D3D11.GetApi(null, false);
             _compiler = D3DCompiler.GetApi();
