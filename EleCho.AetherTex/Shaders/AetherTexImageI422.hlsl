@@ -28,6 +28,11 @@
 Texture2DArray _input[SourceCount];
 SamplerState _sampler;
 
+cbuffer ConstantBuffer : register(b0)
+{
+    float3x3 TransformMatrix;
+};
+
 struct vs_in
 {
     float2 position : MT_POSITION;
@@ -42,6 +47,11 @@ struct vs_out
 
 float4 sample_source(int sourceIndex, float2 texcoord)
 {
+    float3 transformResult = mul(float1x3(texcoord, 1), TransformMatrix);
+    texcoord = float2(
+        transformResult.x / transformResult.z,
+        transformResult.y / transformResult.z);
+    
     const int2 tileSize = int2(
         TileWidth,
         TileHeight);

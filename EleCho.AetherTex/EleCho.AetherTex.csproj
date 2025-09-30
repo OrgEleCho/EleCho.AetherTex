@@ -16,6 +16,7 @@
     <EmbeddedResource Include="Shaders\AetherTexImageBayerGbrg.hlsl" />
     <EmbeddedResource Include="Shaders\AetherTexImageI420.hlsl" />
     <EmbeddedResource Include="Shaders\AetherTexImageBayerRggb.hlsl" />
+    <EmbeddedResource Include="Shaders\Core.hlsl" />
     <EmbeddedResource Include="Shaders\CommonForYuv.hlsl" />
     <EmbeddedResource Include="Shaders\CommonForBayer.hlsl" />
     <EmbeddedResource Include="Shaders\Common.hlsl" />

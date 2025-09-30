@@ -1,3 +1,4 @@
+#include <Core.hlsl>
 #include <Common.hlsl>
 
 #ifndef SourceCount
@@ -22,6 +23,10 @@
 
 #ifndef TileColumns
 #define TileColumns 2
+#endif
+
+#ifndef EdgeSize
+#define EdgeSize 0
 #endif
 
 Texture2DArray _input[SourceCount];
@@ -51,22 +56,13 @@ float4 sample_source(int sourceIndex, float2 texcoord)
         transformResult.x / transformResult.z,
         transformResult.y / transformResult.z);
     
-    float uGlobal = texcoord.x / TileWidth / TileColumns;
-    float vGlobal = texcoord.y / TileHeight / TileRows;
-    clip(float4(uGlobal, vGlobal, 1 - uGlobal, 1 - vGlobal));
+    int2 tileSize = int2(TileWidth, TileHeight);
+    discard_if_out_of_range(tileSize, EdgeSize, TileRows, TileColumns, texcoord);
+    int tileIndex = calculate_tile_index(tileSize, EdgeSize, TileColumns, texcoord);
+    float2 xyInTile = calculate_coordinates_in_tile(tileSize, EdgeSize, texcoord);
+    float2 uvInTile = calculate_uv_in_tile(tileSize, xyInTile);
     
-    int tileX = ((int) texcoord.x) / TileWidth;
-    int tileY = ((int) texcoord.y) / TileHeight;
-    int tileIndex = tileY * TileColumns + tileX;
-    
-    float tileXStart = TileWidth * tileX;
-    float tileYStart = TileHeight * tileY;
-    float xInTile = texcoord.x - tileXStart;
-    float yInTile = texcoord.y - tileYStart;
-    float uInTile = xInTile / TileWidth;
-    float vInTile = yInTile / TileHeight;
-    
-    return _input[sourceIndex].Sample(_sampler, float3(uInTile, vInTile, tileIndex));
+    return _input[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
 }
 
 vs_out vs_main(vs_in input)
