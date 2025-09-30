@@ -32,6 +32,7 @@ namespace EleCho.AetherTex
 
         private Texture2DDesc _texture2DDesc;
         private BufferDesc _vertexBufferDesc;
+        private BufferDesc _constantBufferDesc;
         private SamplerDesc _samplerDesc;
 
         private ComPtr<ID3DInclude> _include;
@@ -40,6 +41,7 @@ namespace EleCho.AetherTex
         private ComPtr<ID3D11Texture2D>[] _textures;
         private ComPtr<ID3D11ShaderResourceView>[] _textureViews;
         private ComPtr<ID3D11Buffer> _vertexBuffer;
+        private ComPtr<ID3D11Buffer> _constantBuffer;
         private ComPtr<ID3D10Blob> _vertexShaderBlob;
         private ComPtr<ID3D11VertexShader> _vertexShader;
         private ComPtr<ID3D11InputLayout> _inputLayout;
@@ -277,6 +279,15 @@ namespace EleCho.AetherTex
                 Usage = Usage.Dynamic
             };
 
+            _constantBufferDesc = new BufferDesc()
+            {
+                BindFlags = (uint)BindFlag.ConstantBuffer,
+                ByteWidth = (uint)(sizeof(float) * 4 * 3),
+                CPUAccessFlags = (uint)CpuAccessFlag.Write,
+                MiscFlags = 0,
+                Usage = Usage.Dynamic
+            };
+
             ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc(
                 format: _texture2DDesc.Format,
                 viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2D,
@@ -303,6 +314,7 @@ namespace EleCho.AetherTex
             }
 
             _vertexBuffer = DxUtils.CreateBuffer(_device, _vertexBufferDesc);
+            _constantBuffer = DxUtils.CreateBuffer(_device, _constantBufferDesc);
 
             _vertexShaderBlob = DxUtils.Compile(_compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"), new Dictionary<string, string>()
             {
@@ -416,6 +428,35 @@ namespace EleCho.AetherTex
             _deviceContext.Unmap(_vertexBuffer, 0);
         }
 
+        private void UpdateTransform(TransformMatrix transformMatrix)
+        {
+            // 因为需要对图像进行变换, 而着色器里面是对采样点位置做变换
+            // 所以这里需要向 DX 传入逆矩阵
+            transformMatrix.Invert();
+
+            MappedSubresource mappedSubResource = default;
+            _deviceContext.Map(_constantBuffer, 0, Map.WriteDiscard, 0, ref mappedSubResource);
+
+            float* pMatrixElements = (float*)mappedSubResource.PData;
+
+            pMatrixElements[0] = transformMatrix.ScaleX;
+            pMatrixElements[1] = transformMatrix.SkewX;
+            pMatrixElements[2] = transformMatrix.TransX;
+            pMatrixElements[3] = 0;
+
+            pMatrixElements[4] = transformMatrix.SkewY;
+            pMatrixElements[5] = transformMatrix.ScaleY;
+            pMatrixElements[6] = transformMatrix.TransY;
+            pMatrixElements[7] = 0;
+
+            pMatrixElements[8] = transformMatrix.PerspX;
+            pMatrixElements[9] = transformMatrix.PerspY;
+            pMatrixElements[10] = transformMatrix.PerspZ;
+            pMatrixElements[11] = 0;
+
+            _deviceContext.Unmap(_constantBuffer, 0);
+        }
+
         private void Render(ExprSource source, TextureData buffer)
         {
             if (!ReferenceEquals(source.Owner, this))
@@ -504,6 +545,7 @@ namespace EleCho.AetherTex
 
             _deviceContext.PSSetShaderResources(0, (uint)_textureViews.Length, ref _textureViews[0]);
             _deviceContext.PSSetSamplers(0, 1, ref _samplerState);
+            _deviceContext.PSSetConstantBuffers(0, 1, ref _constantBuffer);
 
             _deviceContext.Draw(4, 0);
 
@@ -532,16 +574,23 @@ namespace EleCho.AetherTex
             return new ExprSource(this, expression);
         }
 
-        public void Read(ExprSource source, QuadVectors quad, TextureData buffer)
+        public void Read(ExprSource source, TransformMatrix transform, QuadVectors quad, TextureData buffer)
         {
             EnsureNotDisposed();
 
             UpdateVertices(quad);
+            UpdateTransform(transform);
             Render(source, buffer);
         }
 
+        public void Read(ExprSource source, QuadVectors quad, TextureData buffer)
+            => Read(source, TransformMatrix.Identity, quad, buffer);
+
+        public void Read(TransformMatrix transform, QuadVectors quad, TextureData buffer)
+            => Read(DefaultSource, transform, quad, buffer);
+
         public void Read(QuadVectors quad, TextureData buffer)
-            => Read(DefaultSource, quad, buffer);
+            => Read(DefaultSource, TransformMatrix.Identity, quad, buffer);
 
         private void EnsureCanWrite(TextureFormat dataFormat, int dataWidth, int dataHeight)
         {

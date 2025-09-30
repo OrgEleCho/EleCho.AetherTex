@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
+using Silk.NET.Maths;
 
 namespace EleCho.AetherTex
 {
@@ -11,17 +13,6 @@ namespace EleCho.AetherTex
                 new Vector2(left + width, top),
                 new Vector2(left + width, top + height),
                 new Vector2(left, top + height));
-        }
-    }
-
-    public record struct TextureData(TextureFormat Format, int Width, int Height, nint BaseAddress, nint RowBytes)
-    {
-        public static int GetRequiredDataSize(TextureFormat format, int width, int height)
-        {
-            return format switch
-            {
-                _ => throw new NotImplementedException()
-            };
         }
     }
 }

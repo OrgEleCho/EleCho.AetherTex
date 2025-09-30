@@ -206,6 +206,34 @@ internal class Program
     {
         var bitmap = SKBitmap.Decode("test.jpg");
         var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var megaTexture = new AetherTexImage(TextureFormat.Bgra8888, 1024, 1024, 2, 2);
+        megaTexture.Write(GetTextureData(bitmap), 0, 0);
+        megaTexture.Write(GetTextureData(bitmap), 1, 0);
+        megaTexture.Write(GetTextureData(bitmap), 0, 1);
+        megaTexture.Write(GetTextureData(bitmap), 1, 1);
+
+        var transform = TransformMatrix.PerspectiveTransform(
+            new Vector2(0, 0), new Vector2(100, 100),
+            new Vector2(2048, 0), new Vector2(1948, 100),
+            new Vector2(0, 2048), new Vector2(300, 1748),
+            new Vector2(2048, 2048), new Vector2(1748, 1748));
+
+        var quad = new QuadVectors(
+            new Vector2(0, 0),
+            new Vector2(2048, 0),
+            new Vector2(2048, 2048),
+            new Vector2(0, 2048));
+
+        using var output = File.Create("output.png");
+        var source = megaTexture.CreateSource("color.rgb");
+        megaTexture.Read(source, transform, quad, GetTextureData(bitmap2));
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
+    static void TestBayerFeature()
+    {
+        var bitmap = SKBitmap.Decode("test.jpg");
+        var bitmap2 = new SKBitmap(4096, 4096, SKColorType.Bgra8888, SKAlphaType.Unpremul);
         var megaTexture = new AetherTexImage(TextureFormat.BayerRggb, 1024, 1024, 2, 2);
         AsBayer(GetTextureData(bitmap), TextureFormat.BayerRggb, data =>
         {
@@ -284,7 +312,7 @@ internal class Program
 
     private static void Main(string[] args)
     {
-        TestYuvFeature();
+        TestFeature();
 
         Console.WriteLine("Hello, World!");
     }
