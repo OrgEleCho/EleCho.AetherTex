@@ -1,3 +1,4 @@
+#include <Core.hlsl>
 #include <Common.hlsl>
 #include <CommonForBayer.hlsl>
 
@@ -23,6 +24,10 @@
 
 #ifndef TileColumns
 #define TileColumns 2
+#endif
+
+#ifndef EdgeSize
+#define EdgeSize 0
 #endif
 
 Texture2DArray _input[SourceCount];
@@ -56,10 +61,7 @@ float4 sample_source(int sourceIndex, float2 texcoord)
         TileWidth,
         TileHeight);
     
-    const int2 wholeSize = int2(
-        TileWidth * TileColumns,
-        TileHeight * TileRows);
-
+    discard_if_out_of_range(tileSize, EdgeSize, TileRows, TileColumns, texcoord);
     const int2 xy = int2(
         (int) texcoord.x,
         (int) texcoord.y);
@@ -70,33 +72,33 @@ float4 sample_source(int sourceIndex, float2 texcoord)
     if (positionInPattern == 0)
     {
         return float4(
-            load(tiles, tileSize, TileColumns, xy).r,
-            load_siblings(tiles, tileSize, TileColumns, xy).r,
-            load_corners(tiles, tileSize, TileColumns, xy).r,
+            load(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load_siblings(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load_corners(tiles, tileSize, EdgeSize, TileColumns, xy).r,
             1.0);
     }
     else if (positionInPattern == 1)
     {
         return float4(
-            load_left_right(tiles, tileSize, TileColumns, xy).r,
-            load(tiles, tileSize, TileColumns, xy).r,
-            load_up_down(tiles, tileSize, TileColumns, xy).r,
+            load_left_right(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load_up_down(tiles, tileSize, EdgeSize, TileColumns, xy).r,
             1.0);
     }
     else if (positionInPattern == 2)
     {
         return float4(
-            load_up_down(tiles, tileSize, TileColumns, xy).r,
-            load(tiles, tileSize, TileColumns, xy).r,
-            load_left_right(tiles, tileSize, TileColumns, xy).r,
+            load_up_down(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load_left_right(tiles, tileSize, EdgeSize, TileColumns, xy).r,
             1.0);
     }
     else // positionInPattern == 3
     {
         return float4(
-            load_corners(tiles, tileSize, TileColumns, xy).r,
-            load_siblings(tiles, tileSize, TileColumns, xy).r,
-            load(tiles, tileSize, TileColumns, xy).r,
+            load_corners(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load_siblings(tiles, tileSize, EdgeSize, TileColumns, xy).r,
+            load(tiles, tileSize, EdgeSize, TileColumns, xy).r,
             1.0);
     }
 }

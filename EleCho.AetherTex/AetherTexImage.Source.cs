@@ -31,6 +31,7 @@ namespace EleCho.AetherTex
                         ["TileHeight"] = owner.TileHeight.ToString(),
                         ["TileRows"] = owner.Rows.ToString(),
                         ["TileColumns"] = owner.Columns.ToString(),
+                        ["EdgeSize"] = owner.EdgeSize.ToString(),
                         ["SourceExpr"] = shaderExpression
                     }, owner._include);
 
