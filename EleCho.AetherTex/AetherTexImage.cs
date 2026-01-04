@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing.Imaging;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -21,16 +22,16 @@ namespace EleCho.AetherTex
 
         private readonly string[] _sources;
         private readonly Dictionary<string, (nint DataPointer, int DataSize)> _openedShaderSources;
-
+        private readonly bool _keepDeviceAlive;
         private Delegate _funcIncludeOpen;
         private Delegate _funcIncludeClose;
 
         private ExprSource? _defaultSource;
 
-        private D3D11 _api;
         private D3DCompiler _compiler;
 
         private Texture2DDesc _texture2DDesc;
+        private Texture2DDesc? _texture2DDesc2;
         private BufferDesc _vertexBufferDesc;
         private BufferDesc _constantBufferDesc;
         private SamplerDesc _samplerDesc;
@@ -39,7 +40,9 @@ namespace EleCho.AetherTex
         private ComPtr<ID3D11Device> _device;
         private ComPtr<ID3D11DeviceContext> _deviceContext;
         private ComPtr<ID3D11Texture2D>[] _textures;
+        private ComPtr<ID3D11Texture2D>[]? _textures2;
         private ComPtr<ID3D11ShaderResourceView>[] _textureViews;
+        private ComPtr<ID3D11ShaderResourceView>[]? _textureViews2;
         private ComPtr<ID3D11Buffer> _vertexBuffer;
         private ComPtr<ID3D11Buffer> _constantBuffer;
         private ComPtr<ID3D10Blob> _vertexShaderBlob;
@@ -76,6 +79,34 @@ namespace EleCho.AetherTex
 
         public QuadVectors FullQuad { get; }
 
+        private static ComPtr<ID3D11DeviceContext> CreateDeviceContext()
+        {
+            var api = D3D11.GetApi(null, false);
+
+            ComPtr<ID3D11Device> device = default;
+            ComPtr<ID3D11DeviceContext> deviceContext = default;
+
+            int createDeviceError = api.CreateDevice(ref Unsafe.NullRef<IDXGIAdapter>(), D3DDriverType.Hardware, 0, (uint)CreateDeviceFlag.Debug, ref Unsafe.NullRef<D3DFeatureLevel>(), 0, D3D11.SdkVersion, ref device, null, ref deviceContext);
+            if (createDeviceError != 0)
+            {
+                throw new InvalidOperationException("Failed to create device");
+            }
+
+            return deviceContext;
+        }
+
+        private static void VerifyTileSize(TextureFormat format, int tileWidth, int tileHeight)
+        {
+            if (format.TileSizeMustBeEven())
+            {
+                if (tileWidth % 2 != 0 ||
+                    tileHeight % 2 != 0)
+                {
+                    throw new ArgumentException("Tile width and height must be even numbers for specified format");
+                }
+            }
+        }
+
         private static string GetShaderEntryPointFileName(TextureFormat textureFormat)
         {
             return textureFormat switch
@@ -87,10 +118,20 @@ namespace EleCho.AetherTex
                 TextureFormat.I444 => "AetherTexImageI444.hlsl",
                 TextureFormat.I422 => "AetherTexImageI422.hlsl",
                 TextureFormat.I420 => "AetherTexImageI420.hlsl",
+                TextureFormat.Yuv420 => "AetherTexImageYuv420.hlsl",
                 _ => "AetherTexImage.hlsl",
             };
         }
 
+        /// <summary>
+        /// 获取第一个纹理描述
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="arraySize"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         private static Texture2DDesc GetTextureDesc(TextureFormat format, int width, int height, int arraySize)
         {
             var dxPixelFormat = format switch
@@ -109,6 +150,8 @@ namespace EleCho.AetherTex
                 TextureFormat.I444 => Silk.NET.DXGI.Format.FormatR8Unorm,
                 TextureFormat.I422 => Silk.NET.DXGI.Format.FormatR8Unorm,
                 TextureFormat.I420 => Silk.NET.DXGI.Format.FormatR8Unorm,
+
+                TextureFormat.Yuv420 => Silk.NET.DXGI.Format.FormatR8Unorm,
 
                 TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
 
@@ -156,6 +199,19 @@ namespace EleCho.AetherTex
                     SampleDesc = new SampleDesc(1, 0),
                     Usage = Usage.Default,
                 },
+                TextureFormat.Yuv420 => new Texture2DDesc()
+                {
+                    Width = (uint)width,
+                    Height = (uint)height,
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = dxPixelFormat,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
                 _ => new Texture2DDesc()
                 {
                     Width = (uint)width,
@@ -170,6 +226,59 @@ namespace EleCho.AetherTex
                     Usage = Usage.Default,
                 }
             };
+        }
+
+        /// <summary>
+        /// 获取第二个纹理描述 (需要多个不同大小或格式的纹理组合的图像格式才需要实现这个. 例如 YUV420)
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="arraySize"></param>
+        /// <returns></returns>
+        private static Texture2DDesc? GetTextureDesc2(TextureFormat format, int width, int height, int arraySize)
+        {
+            return format switch
+            {
+                TextureFormat.Yuv420 => new Texture2DDesc()
+                {
+                    Width = (uint)(width / 2),
+                    Height = (uint)(height / 2),
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = Silk.NET.DXGI.Format.FormatR8G8Unorm,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
+                _ => null,
+            };
+        }
+
+        private static void InitializeTexturesAndShaderResourceViews(
+            ComPtr<ID3D11Device> device,
+            Texture2DDesc texture2DDesc,
+            int count,
+            out ComPtr<ID3D11Texture2D>[] textures,
+            out ComPtr<ID3D11ShaderResourceView>[] shaderResourceViews)
+        {
+            ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc(
+                format: texture2DDesc.Format,
+                viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2D,
+                texture2D: new Tex2DSrv(
+                    mipLevels: 1,
+                    mostDetailedMip: 0));
+
+            textures = new ComPtr<ID3D11Texture2D>[count];
+            shaderResourceViews = new ComPtr<ID3D11ShaderResourceView>[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                textures[i] = DxUtils.CreateTexture2D(device, texture2DDesc);
+                device.CreateShaderResourceView(textures[i], in inputTextureShaderResourceViewDesc, ref shaderResourceViews[i]);
+            }
         }
 
         private int D3DIncludeOpen(
@@ -223,25 +332,32 @@ namespace EleCho.AetherTex
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="deviceContext"></param>
+        /// <param name="keepDeviceAlive"></param>
         /// <param name="format"></param>
         /// <param name="tileWidth"></param>
         /// <param name="tileHeight"></param>
+        /// <param name="edgeSize"></param>
         /// <param name="rows"></param>
         /// <param name="columns"></param>
         /// <param name="sources"></param>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
         public AetherTexImage(
+            ComPtr<ID3D11DeviceContext> deviceContext, bool keepDeviceAlive,
             TextureFormat format, int tileWidth, int tileHeight, int edgeSize, int rows, int columns,
             IEnumerable<string> sources)
         {
-            if (format.IsBayer())
+            if (deviceContext.Handle == null)
             {
-                if (tileWidth % 2 != 0 ||
-                    tileHeight % 2 != 0)
-                {
-                    throw new ArgumentException("Tile width and height must be even numbers for Bayer formats");
-                }
+                throw new ArgumentNullException(nameof(deviceContext));
             }
+
+            deviceContext.GetDevice(ref _device);
+            _deviceContext = deviceContext;
+            _keepDeviceAlive = keepDeviceAlive;
+
+            // ensure tile size valid
+            VerifyTileSize(format, tileWidth, tileHeight);
 
             _sources = sources.ToArray();
             _openedShaderSources = new();
@@ -273,6 +389,7 @@ namespace EleCho.AetherTex
             _include = new ComPtr<ID3DInclude>(include);
 
             _texture2DDesc = GetTextureDesc(format, tileWidth, tileHeight, rows * columns);
+            _texture2DDesc2 = GetTextureDesc2(format, tileWidth, tileHeight, rows * columns);
 
             _vertexBufferDesc = new BufferDesc()
             {
@@ -299,22 +416,13 @@ namespace EleCho.AetherTex
                     mipLevels: 1,
                     mostDetailedMip: 0));
 
-            _api = D3D11.GetApi(null, false);
             _compiler = D3DCompiler.GetApi();
 
-            int createDeviceError = _api.CreateDevice(ref Unsafe.NullRef<IDXGIAdapter>(), D3DDriverType.Hardware, 0, (uint)CreateDeviceFlag.Debug, ref Unsafe.NullRef<D3DFeatureLevel>(), 0, D3D11.SdkVersion, ref _device, null, ref _deviceContext);
-            if (createDeviceError != 0)
-            {
-                throw new InvalidOperationException("Failed to create device");
-            }
 
-            _textures = new ComPtr<ID3D11Texture2D>[_sources.Length];
-            _textureViews = new ComPtr<ID3D11ShaderResourceView>[_sources.Length];
-
-            for (int i = 0; i < _sources.Length; i++)
+            InitializeTexturesAndShaderResourceViews(_device, _texture2DDesc, _sources.Length, out _textures, out _textureViews);
+            if (_texture2DDesc2 is { } texture2DDesc2)
             {
-                _textures[i] = DxUtils.CreateTexture2D(_device, _texture2DDesc);
-                _device.CreateShaderResourceView(_textures[i], in inputTextureShaderResourceViewDesc, ref _textureViews[i]);
+                InitializeTexturesAndShaderResourceViews(_device, texture2DDesc2, _sources.Length, out _textures2, out _textureViews2);
             }
 
             _vertexBuffer = DxUtils.CreateBuffer(_device, _vertexBufferDesc);
@@ -353,6 +461,23 @@ namespace EleCho.AetherTex
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="tileWidth"></param>
+        /// <param name="tileHeight"></param>
+        /// <param name="rows"></param>
+        /// <param name="columns"></param>
+        /// <param name="sources"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        public AetherTexImage(
+            TextureFormat format, int tileWidth, int tileHeight, int edgeSize, int rows, int columns,
+            IEnumerable<string> sources) : this(CreateDeviceContext(), false, format, tileWidth, tileHeight, edgeSize, rows, columns, sources)
+        {
+
         }
 
         /// <summary>
@@ -588,6 +713,11 @@ namespace EleCho.AetherTex
             _deviceContext.IASetInputLayout(_inputLayout);
 
             _deviceContext.PSSetShaderResources(0, (uint)_textureViews.Length, ref _textureViews[0]);
+            if (_textureViews2 is { })
+            {
+                _deviceContext.PSSetShaderResources(1, (uint)_textureViews2.Length, ref _textureViews2[0]);
+            }
+
             _deviceContext.PSSetSamplers(0, 1, ref _samplerState);
             _deviceContext.PSSetConstantBuffers(0, 1, ref _constantBuffer);
 
@@ -803,6 +933,15 @@ namespace EleCho.AetherTex
                 {
                     _textureViews[i].Dispose();
                     _textures[i].Dispose();
+                }
+
+                if (_textures2 is { })
+                {
+                    for (int i = 0; i < _textures.Length; i++)
+                    {
+                        _textureViews2![i].Dispose();
+                        _textures2[i].Dispose();
+                    }
                 }
 
                 _device.Dispose();

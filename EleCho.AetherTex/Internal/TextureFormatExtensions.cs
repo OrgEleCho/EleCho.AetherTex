@@ -28,7 +28,22 @@ namespace EleCho.AetherTex.Internal
         public static bool IsYuv(this TextureFormat format)
         {
             return format is
-                TextureFormat.I420;
+                TextureFormat.I420 or
+                TextureFormat.I422 or
+                TextureFormat.I444 or
+                TextureFormat.Yuv420;
+        }
+
+        public static bool TileSizeMustBeEven(this TextureFormat format)
+        {
+            return format is
+                TextureFormat.BayerRggb or
+                TextureFormat.BayerBggr or
+                TextureFormat.BayerGbrg or
+                TextureFormat.BayerGrbg or
+                TextureFormat.I420 or
+                TextureFormat.I422 or
+                TextureFormat.Yuv420;
         }
     }
 }

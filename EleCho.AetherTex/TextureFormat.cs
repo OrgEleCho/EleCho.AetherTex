@@ -28,6 +28,11 @@
         /// </summary>
         I420,
 
+        /// <summary>
+        /// YUV420, Splitted
+        /// </summary>
+        Yuv420,
+
         Float32,
     }
 }
