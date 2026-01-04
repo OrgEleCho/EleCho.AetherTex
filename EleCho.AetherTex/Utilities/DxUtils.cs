@@ -52,6 +52,21 @@ namespace EleCho.AetherTex.Utilities
             return texture;
         }
 
+        public static unsafe ComPtr<ID3D11Texture2D> CreateTexture2D(ComPtr<ID3D11Device> device, in TextureData initialData, in Texture2DDesc desc)
+        {
+            if (initialData.Width != desc.Width ||
+                initialData.Height != desc.Height)
+            {
+                throw new ArgumentException("Size not match");
+            }
+
+            return CreateTexture2D(device, new SubresourceData()
+            {
+                PSysMem = (byte*)initialData.BaseAddress,
+                SysMemPitch = (uint)initialData.RowBytes
+            }, desc);
+        }
+
         public static ComPtr<ID3D11Texture2D> CreateTexture2D(ComPtr<ID3D11Device> device, in Texture2DDesc desc)
             => CreateTexture2D(device, in Unsafe.NullRef<SubresourceData>(), in desc);
 
