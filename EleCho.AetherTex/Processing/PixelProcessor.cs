@@ -34,16 +34,16 @@ namespace EleCho.AetherTex.Converters
             var shaderExpression = ColorExpressionParser.GetShaderExpressionForSourceExpr(expression, new[] { sourceName });
 
             _deviceContext = deviceContext;
-            _vertexShaderBlob = DxUtils.Compile(compiler, "shader", "vs_main", "vs_5_5", AssemblyResourceUtils.GetShaderBytes("PixelProcessor.hlsl"));
-            _pixelShaderBlob = DxUtils.Compile(compiler, "shader", "ps_main", "vs_5_5", AssemblyResourceUtils.GetShaderBytes("PixelProcessor.hlsl"), new Dictionary<string, string>()
+            _vertexShaderBlob = DxUtils.Compile(compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("PixelProcessor.hlsl"), DxInclude.Instance.Include);
+            _pixelShaderBlob = DxUtils.Compile(compiler, "shader", "ps_main", "ps_5_0", AssemblyResourceUtils.GetShaderBytes("PixelProcessor.hlsl"), new Dictionary<string, string>()
             {
                 ["SourceExpr"] = shaderExpression
-            });
+            }, DxInclude.Instance.Include);
 
             _vertexShader = DxUtils.CreateVertexShader(device, _vertexShaderBlob);
             _pixelShader = DxUtils.CreatePixelShader(device, _pixelShaderBlob);
 
-            using var sematicTexcoord0 = new NativeString("TEXCOORD0");
+            using var sematicTexcoord0 = new NativeString("MT_POSITION");
 
             _inputLayout = DxUtils.CreateInputLayout(device, _vertexShaderBlob, new[]
             {
@@ -59,10 +59,10 @@ namespace EleCho.AetherTex.Converters
 
             float* vertexBufferData = stackalloc float[8]
             {
-                -1.0f, -1.0f,
-                 0.0f,  1.0f,
-                 1.0f, -1.0f,
-                 1.0f,  1.0f,
+                -1, 1,
+                1, 1,
+                -1, -1,
+                1, -1
             };
 
             _vertexBuffer = DxUtils.CreateBuffer(device, new BufferDesc()
@@ -75,14 +75,17 @@ namespace EleCho.AetherTex.Converters
             }, new SubresourceData()
             {
                 PSysMem = vertexBufferData,
+                SysMemPitch = sizeof(float) * 8
             });
         }
 
         public unsafe void Process(
             ComPtr<ID3D11ShaderResourceView> input,
-            ComPtr<ID3D11RenderTargetView> renderTargetView)
+            ComPtr<ID3D11RenderTargetView> renderTargetView,
+            int width,
+            int height)
         {
-            var viewport = new Viewport(0, 0, 1, 1, 0, 1);
+            var viewport = new Viewport(0, 0, width, height, 0, 1);
 
             float* background = stackalloc float[4];
 
@@ -95,7 +98,7 @@ namespace EleCho.AetherTex.Converters
             _deviceContext.VSSetShader(_vertexShader, ref Unsafe.NullRef<ComPtr<ID3D11ClassInstance>>(), 0);
             _deviceContext.PSSetShader(_pixelShader, ref Unsafe.NullRef<ComPtr<ID3D11ClassInstance>>(), 0);
 
-            uint vertexStride = sizeof(float) * 4;
+            uint vertexStride = sizeof(float) * 2;
             uint vertexOffset = 0;
             _deviceContext.IASetVertexBuffers(0, 1, ref _vertexBuffer, in vertexStride, in vertexOffset);
             _deviceContext.IASetPrimitiveTopology(D3DPrimitiveTopology.D3D10PrimitiveTopologyTrianglestrip);

@@ -370,9 +370,26 @@ internal class Program
         }
     }
 
+    static void TestWriteBgra8888IntoYuv420()
+    {
+        var bitmap = SKBitmap.Decode("test.jpg");
+        var texture = new AetherTexImage(TextureFormat.Yuv420, bitmap.Width, bitmap.Height, 1, 1);
+
+        var bufferData = GetTextureData(bitmap);
+        texture.Write(bufferData, 0, 0, 0);
+
+        var bitmap2 = new SKBitmap(1024, 1024, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var bufferData2 = GetTextureData(bitmap2);
+
+        texture.Read(texture.FullQuad, bufferData2);
+
+        using var output = File.Create("output.png");
+        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+    }
+
     private static void Main(string[] args)
     {
-        TestYuvEdgeFeature();
+        TestWriteBgra8888IntoYuv420();
 
         Console.WriteLine("Hello, World!");
     }

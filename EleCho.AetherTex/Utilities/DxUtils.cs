@@ -82,6 +82,15 @@ namespace EleCho.AetherTex.Utilities
         public static ComPtr<ID3D11Buffer> CreateBuffer(ComPtr<ID3D11Device> device, in BufferDesc desc)
             => CreateBuffer(device, in desc, in Unsafe.NullRef<SubresourceData>());
 
+        public static ComPtr<ID3D11ShaderResourceView> CreateShaderResourceView(ComPtr<ID3D11Device> device, ComPtr<ID3D11Texture2D> texture2D, in ShaderResourceViewDesc desc)
+        {
+            ComPtr<ID3D11ShaderResourceView> shaderResourceView = default;
+            var hr = device.CreateShaderResourceView(texture2D, in desc, ref shaderResourceView);
+            DxUtils.ThrowHResult(hr);
+
+            return shaderResourceView;
+        }
+
         public static ComPtr<ID3D11RenderTargetView> CreateRenderTargetView(ComPtr<ID3D11Device> device, ComPtr<ID3D11Texture2D> texture, in RenderTargetViewDesc desc)
         {
             ComPtr<ID3D11RenderTargetView> renderTarget = default;
@@ -90,6 +99,9 @@ namespace EleCho.AetherTex.Utilities
 
             return renderTarget;
         }
+
+        public static ComPtr<ID3D11RenderTargetView> CreateRenderTargetView(ComPtr<ID3D11Device> device, ComPtr<ID3D11Texture2D> texture)
+            => CreateRenderTargetView(device, texture, in Unsafe.NullRef<RenderTargetViewDesc>());
 
         public static void CopyTexture(
             ComPtr<ID3D11Device> device,
@@ -201,6 +213,9 @@ namespace EleCho.AetherTex.Utilities
 
         public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, IEnumerable<KeyValuePair<string, string>> macros)
             => Compile(compiler, sourceName, entryPoint, target, shaderSource, macros, default);
+
+        public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource, ComPtr<ID3DInclude> include)
+            => Compile(compiler, sourceName, entryPoint, target, shaderSource, Array.Empty<D3DShaderMacro>(), include);
 
         public static unsafe ComPtr<ID3D10Blob> Compile(D3DCompiler compiler, string sourceName, string entryPoint, string target, ReadOnlySpan<byte> shaderSource)
             => Compile(compiler, sourceName, entryPoint, target, shaderSource, Array.Empty<D3DShaderMacro>());

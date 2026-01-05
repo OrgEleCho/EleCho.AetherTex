@@ -15,7 +15,7 @@ SamplerState _sampler
 
 struct vertex
 {
-    float2 texcoord : TEXCOORD0;
+    float2 position : MT_POSITION;
 };
 
 struct ps_in
@@ -28,14 +28,14 @@ ps_in vs_main(vertex input)
 {
     ps_in output =
     {
-        float4(input.texcoord, 0.5, 1.0),
-        input.texcoord
+        float4(input.position, 0.5, 1.0),
+        (input.position * float2(1, -1) + float2(1, 1)) / 2.0
     };
     
     return output;
 }
 
-float4 ps_main(vertex input) : SV_TARGET
+float4 ps_main(ps_in input) : SV_TARGET
 {
     float4 sources[1];
     

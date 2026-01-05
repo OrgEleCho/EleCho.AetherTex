@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using EleCho.AetherTex.Helpers;
 using EleCho.AetherTex.Internal;
+using EleCho.AetherTex.Processing;
 using EleCho.AetherTex.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
@@ -21,10 +22,7 @@ namespace EleCho.AetherTex
         const int CurrentFormatVersion = 1;
 
         private readonly string[] _sources;
-        private readonly Dictionary<string, (nint DataPointer, int DataSize)> _openedShaderSources;
         private readonly bool _keepDeviceAlive;
-        private Delegate _funcIncludeOpen;
-        private Delegate _funcIncludeClose;
 
         private ExprSource? _defaultSource;
 
@@ -36,7 +34,6 @@ namespace EleCho.AetherTex
         private BufferDesc _constantBufferDesc;
         private SamplerDesc _samplerDesc;
 
-        private ComPtr<ID3DInclude> _include;
         private ComPtr<ID3D11Device> _device;
         private ComPtr<ID3D11DeviceContext> _deviceContext;
         private ComPtr<ID3D11Texture2D>[] _textures;
@@ -56,6 +53,9 @@ namespace EleCho.AetherTex
         private TransformMatrix? _lastRenderTransform;
         private ComPtr<ID3D11Texture2D> _renderTarget;
         private ComPtr<ID3D11RenderTargetView> _renderTargetView;
+
+        // texxture tile writers
+        private ITileWriter[] _tileWriters;
 
         private float[] _background = [0, 0, 0, 0];
         private bool _disposedValue;
@@ -86,7 +86,7 @@ namespace EleCho.AetherTex
             ComPtr<ID3D11Device> device = default;
             ComPtr<ID3D11DeviceContext> deviceContext = default;
 
-            int createDeviceError = api.CreateDevice(ref Unsafe.NullRef<IDXGIAdapter>(), D3DDriverType.Hardware, 0, (uint)CreateDeviceFlag.Debug, ref Unsafe.NullRef<D3DFeatureLevel>(), 0, D3D11.SdkVersion, ref device, null, ref deviceContext);
+            int createDeviceError = api.CreateDevice(ref Unsafe.NullRef<IDXGIAdapter>(), D3DDriverType.Hardware, 0, (uint)CreateDeviceFlag.None, ref Unsafe.NullRef<D3DFeatureLevel>(), 0, D3D11.SdkVersion, ref device, null, ref deviceContext);
             if (createDeviceError != 0)
             {
                 throw new InvalidOperationException("Failed to create device");
@@ -281,54 +281,6 @@ namespace EleCho.AetherTex
             }
         }
 
-        private int D3DIncludeOpen(
-            ID3DInclude* self, D3DIncludeType includeType, byte* pFileName, void* pParentData, void** ppData, uint* pBytesPtr)
-        {
-            if (includeType != D3DIncludeType.D3DIncludeSystem)
-            {
-                return unchecked((int)0x80004001); // E_NOTIMPL
-            }
-
-            string fileName = Marshal.PtrToStringAnsi((nint)pFileName) ?? string.Empty;
-            if (_openedShaderSources.TryGetValue(fileName, out var existData))
-            {
-                *ppData = (void*)existData.DataPointer;
-                *pBytesPtr = (uint)existData.DataSize;
-                return 0; // S_OK
-            }
-
-            var bytes = AssemblyResourceUtils.GetShaderBytes(fileName);
-            if (bytes is null)
-            {
-                return unchecked((int)0x80070002); // HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
-            }
-
-            var nativeMem = NativeMemory.AllocZeroed((nuint)bytes.Length);
-            fixed (byte* pBytes = bytes)
-            {
-                NativeMemory.Copy(pBytes, nativeMem, (nuint)bytes.Length);
-            }
-
-            _openedShaderSources[fileName] = ((nint)nativeMem, bytes.Length);
-
-            *ppData = nativeMem;
-            *pBytesPtr = (uint)bytes.Length;
-            return 0; // S_OK
-        }
-
-        private int D3DIncludeClose(ID3DInclude* self, void* pData)
-        {
-            var dataPointer = (nint)pData;
-            var item = _openedShaderSources.FirstOrDefault(kv => kv.Value.DataPointer == dataPointer);
-            if (item.Key is not null)
-            {
-                NativeMemory.Free((void*)dataPointer);
-                _openedShaderSources.Remove(item.Key);
-            }
-
-            return 0; // S_OK
-        }
-
         /// <summary>
         /// 
         /// </summary>
@@ -360,7 +312,6 @@ namespace EleCho.AetherTex
             VerifyTileSize(format, tileWidth, tileHeight);
 
             _sources = sources.ToArray();
-            _openedShaderSources = new();
 
             Options = new AetherTexImageOptions(this);
             Format = format;
@@ -376,17 +327,6 @@ namespace EleCho.AetherTex
                 new Vector2(Width, 0),
                 new Vector2(Width, Height),
                 new Vector2(0, Height));
-
-            var includeFunctions = (nint*)NativeMemory.Alloc((nuint)(sizeof(nint) * 2));
-            _funcIncludeOpen = D3DIncludeOpen;
-            _funcIncludeClose = D3DIncludeClose;
-            includeFunctions[0] = Marshal.GetFunctionPointerForDelegate(_funcIncludeOpen);
-            includeFunctions[1] = Marshal.GetFunctionPointerForDelegate(_funcIncludeClose);
-
-            var include = (ID3DInclude*)NativeMemory.Alloc((nuint)sizeof(ID3DInclude));
-            include[0] = new ID3DInclude((void**)includeFunctions);
-
-            _include = new ComPtr<ID3DInclude>(include);
 
             _texture2DDesc = GetTextureDesc(format, tileWidth, tileHeight, rows * columns);
             _texture2DDesc2 = GetTextureDesc2(format, tileWidth, tileHeight, rows * columns);
@@ -431,7 +371,7 @@ namespace EleCho.AetherTex
             _vertexShaderBlob = DxUtils.Compile(_compiler, "shader", "vs_main", "vs_5_0", AssemblyResourceUtils.GetShaderBytes("AetherTexImage.hlsl"), new Dictionary<string, string>()
             {
                 ["SourceCount"] = _sources.Length.ToString(),
-            }, _include);
+            }, DxInclude.Instance.Include);
 
             _vertexShader = DxUtils.CreateVertexShader(_device, _vertexShaderBlob);
 
@@ -461,6 +401,11 @@ namespace EleCho.AetherTex
             ];
 
             _inputLayout = DxUtils.CreateInputLayout(_device, _vertexShaderBlob, inputElementDescSpan);
+
+            _tileWriters = new ITileWriter[]
+            {
+                new Bgra8888ToYuvTileWriter(_device, _deviceContext)
+            };
         }
 
         /// <summary>
@@ -694,7 +639,7 @@ namespace EleCho.AetherTex
                     Usage = Usage.Default,
                 });
 
-                _renderTargetView = DxUtils.CreateRenderTargetView(_device, _renderTarget, in Unsafe.NullRef<RenderTargetViewDesc>());
+                _renderTargetView = DxUtils.CreateRenderTargetView(_device, _renderTarget);
             }
 
             // clear as transparent
@@ -715,7 +660,7 @@ namespace EleCho.AetherTex
             _deviceContext.PSSetShaderResources(0, (uint)_textureViews.Length, ref _textureViews[0]);
             if (_textureViews2 is { })
             {
-                _deviceContext.PSSetShaderResources(1, (uint)_textureViews2.Length, ref _textureViews2[0]);
+                _deviceContext.PSSetShaderResources((uint)1, (uint)_textureViews2.Length, ref _textureViews2[0]);
             }
 
             _deviceContext.PSSetSamplers(0, 1, ref _samplerState);
@@ -766,13 +711,21 @@ namespace EleCho.AetherTex
         public void Read(QuadVectors quad, TextureData buffer)
             => Read(DefaultSource, TransformMatrix.Identity, quad, buffer);
 
-        private void EnsureCanWrite(TextureFormat dataFormat, int dataWidth, int dataHeight)
+        private void EnsureCanWrite(TextureFormat dataFormat, int dataWidth, int dataHeight, out ITileWriter? tileWriter)
         {
             if (dataFormat != Format)
             {
-                throw new InvalidOperationException("Data format not match");
+                tileWriter = _tileWriters.FirstOrDefault(tw => tw.Source == dataFormat && tw.Target == Format);
+
+                if (tileWriter is not null)
+                {
+                    return;
+                }
+
+                throw new InvalidOperationException($"Invalid data format for {Format}");
             }
 
+            tileWriter = null;
             if (Format is TextureFormat.I420 or TextureFormat.I422 or TextureFormat.I444)
             {
                 if (dataWidth != TileWidth ||
@@ -813,7 +766,7 @@ namespace EleCho.AetherTex
         public void Write(TextureData data, int sourceIndex, int column, int row)
         {
             EnsureNotDisposed();
-            EnsureCanWrite(data.Format, data.Width, data.Height);
+            EnsureCanWrite(data.Format, data.Width, data.Height, out var tileWriter);
 
             if (sourceIndex < 0 ||
                 sourceIndex >= _textures.Length)
@@ -821,11 +774,21 @@ namespace EleCho.AetherTex
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
             }
 
-            var texture = _textures[sourceIndex];
             var subResource = (uint)(row * Columns + column);
+            if (tileWriter is null)
+            {
+                var texture = _textures[sourceIndex];
 
-            var box = GetBoxForWriting(data.Width, data.Height, data.RowBytes, out var depthPitch);
-            _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)depthPitch);
+                var box = GetBoxForWriting(data.Width, data.Height, data.RowBytes, out var depthPitch);
+                _deviceContext.UpdateSubresource(texture, subResource, in box, (void*)data.BaseAddress, (uint)data.RowBytes, (uint)depthPitch);
+            }
+            else
+            {
+                var texture1 = _textures[sourceIndex];
+                var texture2 = _textures2?[sourceIndex];
+
+                tileWriter.WriteTile(data, texture1, texture2, subResource);
+            }
         }
 
         public void Write(TextureData data, string source, int column, int row)
@@ -912,16 +875,6 @@ namespace EleCho.AetherTex
                     // TODO: 释放托管状态(托管对象)
                 }
 
-                foreach (var openedShaderSource in _openedShaderSources.Values)
-                {
-                    NativeMemory.Free((void*)openedShaderSource.DataPointer);
-                }
-                _openedShaderSources.Clear();
-
-                var includeValue = *_include.Handle;
-                NativeMemory.Free(includeValue.LpVtbl);
-                NativeMemory.Free(_include.Handle);
-
                 _deviceContext.Dispose();
                 _samplerState.Dispose();
                 _inputLayout.Dispose();
@@ -942,6 +895,11 @@ namespace EleCho.AetherTex
                         _textureViews2![i].Dispose();
                         _textures2[i].Dispose();
                     }
+                }
+
+                foreach (var tileWriter in _tileWriters)
+                {
+                    tileWriter.Dispose();
                 }
 
                 _device.Dispose();

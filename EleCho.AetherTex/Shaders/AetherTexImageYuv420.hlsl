@@ -1,5 +1,6 @@
 #include <Core.hlsl>
 #include <Common.hlsl>
+#include <CommonForYuv.hlsl>
 
 #ifndef SourceCount
 #define SourceCount 2
@@ -29,8 +30,8 @@
 #define EdgeSize 0
 #endif
 
-Texture2DArray _input[SourceCount];
-Texture2DArray _input2[SourceCount];
+Texture2DArray _input[SourceCount] : register(t0);
+Texture2DArray _inputAlt[SourceCount] : register(t1);
 SamplerState _sampler;
 
 cbuffer ConstantBuffer : register(b0)
@@ -63,10 +64,10 @@ float4 sample_source(int sourceIndex, float2 texcoord)
     float2 xyInTile = calculate_coordinates_in_tile(tileSize, EdgeSize, texcoord);
     float2 uvInTile = calculate_uv_in_tile(tileSize, xyInTile);
     
-    float r = _input[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex)).x;
-    float2 gb = _input2[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex)).xy;
+    float4 colorY = _input[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
+    float4 colorUV = _inputAlt[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
     
-    return float4(r, gb, 1);
+    return float4(yuv_to_rgb(float3(colorY.x, colorUV.xy)), 1);
 }
 
 vs_out vs_main(vs_in input)

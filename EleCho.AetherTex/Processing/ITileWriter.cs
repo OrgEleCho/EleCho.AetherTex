@@ -8,7 +8,7 @@ using Silk.NET.Direct3D11;
 
 namespace EleCho.AetherTex.Processing
 {
-    internal interface ITileWriter
+    internal interface ITileWriter : IDisposable
     {
         public TextureFormat Source { get; }
         public TextureFormat Target { get; }
@@ -16,6 +16,7 @@ namespace EleCho.AetherTex.Processing
         public void WriteTile(
             TextureData textureData,
             ComPtr<ID3D11Texture2D> tileTexture1,
-            ComPtr<ID3D11Texture2D> tileTexture2);
+            ComPtr<ID3D11Texture2D>? tileTexture2, 
+            uint subResource);
     }
 }

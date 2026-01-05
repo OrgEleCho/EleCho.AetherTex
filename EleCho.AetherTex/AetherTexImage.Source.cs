@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using EleCho.AetherTex.Helpers;
 using EleCho.AetherTex.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct3D.Compilers;
@@ -33,7 +34,7 @@ namespace EleCho.AetherTex
                         ["TileColumns"] = owner.Columns.ToString(),
                         ["EdgeSize"] = owner.EdgeSize.ToString(),
                         ["SourceExpr"] = shaderExpression
-                    }, owner._include);
+                    }, DxInclude.Instance.Include);
 
                 _pixelShader = DxUtils.CreatePixelShader(owner._device, _pixelShaderBlob);
                 Owner = owner;
