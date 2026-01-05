@@ -324,9 +324,9 @@ namespace EleCho.AetherTex
 
             FullQuad = new QuadVectors(
                 new Vector2(0, 0),
-                new Vector2(Width, 0),
-                new Vector2(Width, Height),
-                new Vector2(0, Height));
+                new Vector2(Width - 1, 0),
+                new Vector2(Width - 1, Height - 1),
+                new Vector2(0, Height - 1));
 
             _texture2DDesc = GetTextureDesc(format, tileWidth, tileHeight, rows * columns);
             _texture2DDesc2 = GetTextureDesc2(format, tileWidth, tileHeight, rows * columns);

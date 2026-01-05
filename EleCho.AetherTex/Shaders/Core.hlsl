@@ -41,8 +41,8 @@ float2 calculate_coordinates_in_tile(int2 tileSize, int edgeSize, float2 texcoor
 
 float2 calculate_uv_in_tile(float2 tileTextureSize, float2 coordsInTileTexture)
 {
-    float uInTileTexture = (coordsInTileTexture.x + 0.5) / (tileTextureSize.x);
-    float vInTileTexture = (coordsInTileTexture.y + 0.5) / (tileTextureSize.y);
+    float uInTileTexture = (coordsInTileTexture.x) / (tileTextureSize.x - 1);
+    float vInTileTexture = (coordsInTileTexture.y) / (tileTextureSize.y - 1);
     
     return float2(uInTileTexture, vInTileTexture);
 }
