@@ -199,19 +199,6 @@ namespace EleCho.AetherTex
                     SampleDesc = new SampleDesc(1, 0),
                     Usage = Usage.Default,
                 },
-                TextureFormat.Yuv420 => new Texture2DDesc()
-                {
-                    Width = (uint)width,
-                    Height = (uint)height,
-                    ArraySize = (uint)arraySize,
-                    BindFlags = (uint)BindFlag.ShaderResource,
-                    CPUAccessFlags = 0,
-                    Format = dxPixelFormat,
-                    MipLevels = 1,
-                    MiscFlags = 0,
-                    SampleDesc = new SampleDesc(1, 0),
-                    Usage = Usage.Default,
-                },
                 _ => new Texture2DDesc()
                 {
                     Width = (uint)width,
@@ -409,7 +396,7 @@ namespace EleCho.AetherTex
 
             _tileWriters = new ITileWriter[]
             {
-                new Bgra8888ToYuvTileWriter(_device, _deviceContext)
+                new Bgra8888ToYuv420TileWriter(_device, _deviceContext)
             };
         }
 

@@ -7,7 +7,7 @@ using Silk.NET.DXGI;
 
 namespace EleCho.AetherTex.Processing
 {
-    internal class Bgra8888ToYuvTileWriter : ITileWriter
+    internal class Bgra8888ToYuv420TileWriter : ITileWriter
     {
         private bool _disposedValue;
         private readonly ComPtr<ID3D11Device> _device;
@@ -19,7 +19,7 @@ namespace EleCho.AetherTex.Processing
 
         public TextureFormat Target => TextureFormat.Yuv420;
 
-        public Bgra8888ToYuvTileWriter(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> deviceContext)
+        public Bgra8888ToYuv420TileWriter(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> deviceContext)
         {
             _device = device;
             _deviceContext = deviceContext;
@@ -113,7 +113,7 @@ namespace EleCho.AetherTex.Processing
             }
         }
 
-        ~Bgra8888ToYuvTileWriter()
+        ~Bgra8888ToYuv420TileWriter()
         {
             Dispose(disposing: false);
         }
