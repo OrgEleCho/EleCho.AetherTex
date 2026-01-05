@@ -9,6 +9,19 @@ namespace EleCho.AetherTex.Internal
 {
     public static class TextureFormatExtensions
     {
+        internal static Format ToDirectX(this TextureFormat format)
+        {
+            return format switch
+            {
+                TextureFormat.Bgra8888 => Format.FormatR8G8B8A8Unorm,
+                TextureFormat.Rgba8888 => Format.FormatB8G8R8A8Unorm,
+                TextureFormat.Gray8 => Format.FormatR8Unorm,
+                TextureFormat.Gray16 => Format.FormatR16Unorm,
+                TextureFormat.Float32 => Format.FormatR32Float,
+                _ => throw new ArgumentException($"Unsupported texture format: {format}"),
+            };
+        }
+
         public static bool IsRgb(this TextureFormat format)
         {
             return format is

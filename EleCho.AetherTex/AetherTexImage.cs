@@ -396,7 +396,10 @@ namespace EleCho.AetherTex
 
             _tileWriters = new ITileWriter[]
             {
-                new Bgra8888ToYuv420TileWriter(_device, _deviceContext)
+                new Bgra8888OrRgba8888ToYuv420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYuv420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToRgba8888OrBgra8888TileWriter(_device, _deviceContext, TextureFormat.Bgra8888, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToRgba8888OrBgra8888TileWriter(_device, _deviceContext, TextureFormat.Rgba8888, TextureFormat.Bgra8888),
             };
         }
 
