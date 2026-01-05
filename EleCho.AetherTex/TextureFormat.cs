@@ -33,6 +33,11 @@
         /// </summary>
         Yuv420,
 
+        /// <summary>
+        /// YCoCg420, Splitted (Y plane + CoCg plane)
+        /// </summary>
+        YCoCg420,
+
         Float32,
     }
 }

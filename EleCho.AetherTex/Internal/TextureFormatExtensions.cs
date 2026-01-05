@@ -13,8 +13,8 @@ namespace EleCho.AetherTex.Internal
         {
             return format switch
             {
-                TextureFormat.Bgra8888 => Format.FormatR8G8B8A8Unorm,
-                TextureFormat.Rgba8888 => Format.FormatB8G8R8A8Unorm,
+                TextureFormat.Rgba8888 => Format.FormatR8G8B8A8Unorm,
+                TextureFormat.Bgra8888 => Format.FormatB8G8R8A8Unorm,
                 TextureFormat.Gray8 => Format.FormatR8Unorm,
                 TextureFormat.Gray16 => Format.FormatR16Unorm,
                 TextureFormat.Float32 => Format.FormatR32Float,
@@ -44,7 +44,8 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.I420 or
                 TextureFormat.I422 or
                 TextureFormat.I444 or
-                TextureFormat.Yuv420;
+                TextureFormat.Yuv420 or
+                TextureFormat.YCoCg420;
         }
 
         public static bool TileSizeMustBeEven(this TextureFormat format)
@@ -56,7 +57,8 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.BayerGrbg or
                 TextureFormat.I420 or
                 TextureFormat.I422 or
-                TextureFormat.Yuv420;
+                TextureFormat.Yuv420 or
+                TextureFormat.YCoCg420;
         }
     }
 }
