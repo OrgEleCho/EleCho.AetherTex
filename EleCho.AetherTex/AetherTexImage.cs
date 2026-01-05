@@ -119,7 +119,11 @@ namespace EleCho.AetherTex
                 TextureFormat.I422 => "AetherTexImageI422.hlsl",
                 TextureFormat.I420 => "AetherTexImageI420.hlsl",
                 TextureFormat.YCbCr420 => "AetherTexImageYCbCr420.hlsl",
+                TextureFormat.YCbCr422 => "AetherTexImageYCbCr422.hlsl",
+                TextureFormat.YCbCr444 => "AetherTexImageYCbCr444.hlsl",
                 TextureFormat.YCoCg420 => "AetherTexImageYCoCg420.hlsl",
+                TextureFormat.YCoCg422 => "AetherTexImageYCoCg422.hlsl",
+                TextureFormat.YCoCg444 => "AetherTexImageYCoCg444.hlsl",
                 _ => "AetherTexImage.hlsl",
             };
         }
@@ -153,7 +157,11 @@ namespace EleCho.AetherTex
                 TextureFormat.I420 => Silk.NET.DXGI.Format.FormatR8Unorm,
 
                 TextureFormat.YCbCr420 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.YCbCr422 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.YCbCr444 => Silk.NET.DXGI.Format.FormatR8G8B8A8Unorm,
                 TextureFormat.YCoCg420 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.YCoCg422 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.YCoCg444 => Silk.NET.DXGI.Format.FormatR8G8B8A8Unorm,
 
                 TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
 
@@ -242,10 +250,36 @@ namespace EleCho.AetherTex
                     SampleDesc = new SampleDesc(1, 0),
                     Usage = Usage.Default,
                 },
+                TextureFormat.YCbCr422 => new Texture2DDesc()
+                {
+                    Width = (uint)(width / 2),
+                    Height = (uint)height,
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = Silk.NET.DXGI.Format.FormatR8G8Unorm,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
                 TextureFormat.YCoCg420 => new Texture2DDesc()
                 {
                     Width = (uint)(width / 2),
                     Height = (uint)(height / 2),
+                    ArraySize = (uint)arraySize,
+                    BindFlags = (uint)BindFlag.ShaderResource,
+                    CPUAccessFlags = 0,
+                    Format = Silk.NET.DXGI.Format.FormatR8G8Unorm,
+                    MipLevels = 1,
+                    MiscFlags = 0,
+                    SampleDesc = new SampleDesc(1, 0),
+                    Usage = Usage.Default,
+                },
+                TextureFormat.YCoCg422 => new Texture2DDesc()
+                {
+                    Width = (uint)(width / 2),
+                    Height = (uint)height,
                     ArraySize = (uint)arraySize,
                     BindFlags = (uint)BindFlag.ShaderResource,
                     CPUAccessFlags = 0,
@@ -413,8 +447,16 @@ namespace EleCho.AetherTex
             {
                 new Bgra8888OrRgba8888ToYCbCr420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
                 new Bgra8888OrRgba8888ToYCbCr420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToYCbCr422TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYCbCr422TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToYCbCr444TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYCbCr444TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
                 new Bgra8888OrRgba8888ToYCoCg420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
                 new Bgra8888OrRgba8888ToYCoCg420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToYCoCg422TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYCoCg422TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToYCoCg444TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYCoCg444TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
                 new Bgra8888OrRgba8888ToRgba8888OrBgra8888TileWriter(_device, _deviceContext, TextureFormat.Bgra8888, TextureFormat.Rgba8888),
                 new Bgra8888OrRgba8888ToRgba8888OrBgra8888TileWriter(_device, _deviceContext, TextureFormat.Rgba8888, TextureFormat.Bgra8888),
             };

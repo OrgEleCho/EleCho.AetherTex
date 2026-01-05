@@ -34,9 +34,29 @@
         YCbCr420,
 
         /// <summary>
+        /// YCbCr 4:2:2, Splitted (Y plane + CbCr plane)
+        /// </summary>
+        YCbCr422,
+
+        /// <summary>
+        /// YCbCr 4:4:4, Packed (YCbCr in single texture)
+        /// </summary>
+        YCbCr444,
+
+        /// <summary>
         /// YCoCg 4:2:0, Splitted (Y plane + CoCg plane)
         /// </summary>
         YCoCg420,
+
+        /// <summary>
+        /// YCoCg 4:2:2, Splitted (Y plane + CoCg plane)
+        /// </summary>
+        YCoCg422,
+
+        /// <summary>
+        /// YCoCg 4:4:4, Packed (YCoCg in single texture)
+        /// </summary>
+        YCoCg444,
 
         Float32,
     }

@@ -45,7 +45,11 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.I422 or
                 TextureFormat.I444 or
                 TextureFormat.YCbCr420 or
-                TextureFormat.YCoCg420;
+                TextureFormat.YCbCr422 or
+                TextureFormat.YCbCr444 or
+                TextureFormat.YCoCg420 or
+                TextureFormat.YCoCg422 or
+                TextureFormat.YCoCg444;
         }
 
         public static bool TileSizeMustBeEven(this TextureFormat format)
@@ -58,7 +62,9 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.I420 or
                 TextureFormat.I422 or
                 TextureFormat.YCbCr420 or
-                TextureFormat.YCoCg420;
+                TextureFormat.YCbCr422 or
+                TextureFormat.YCoCg420 or
+                TextureFormat.YCoCg422;
         }
     }
 }

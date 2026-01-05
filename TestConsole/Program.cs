@@ -370,11 +370,11 @@ internal class Program
         }
     }
 
-    static void TestWriteBgra8888IntoYCbCr420()
+    static void TestWriteBgra8888Into(TextureFormat textureFormat)
     {
         var bitmap = SKBitmap.Decode("PM5544.png");
         var bitmap2 = SKBitmap.Decode("Test.jpg");
-        var texture = new AetherTexImage(TextureFormat.YCbCr420, bitmap.Width, bitmap.Height, 2, 2);
+        var texture = new AetherTexImage(textureFormat, bitmap.Width, bitmap.Height, 2, 2);
 
         var bufferData = GetTextureData(bitmap);
         var bufferData2 = GetTextureData(bitmap2);
@@ -388,36 +388,18 @@ internal class Program
 
         texture.Read(texture.FullQuad, bufferDataOutput);
 
-        using var output = File.Create("output.png");
-        bitmapOutput.Encode(output, SKEncodedImageFormat.Png, 100);
-    }
-
-    static void TestWriteBgra8888IntoYCoCg420()
-    {
-        var bitmap = SKBitmap.Decode("PM5544.png");
-        var bitmap2 = SKBitmap.Decode("Test.jpg");
-        var texture = new AetherTexImage(TextureFormat.YCoCg420, bitmap.Width, bitmap.Height, 2, 2);
-
-        var bufferData = GetTextureData(bitmap);
-        var bufferData2 = GetTextureData(bitmap2);
-        texture.Write(bufferData, 0, 0, 0);
-        texture.Write(bufferData, 0, 1, 1);
-        texture.Write(bufferData2, 0, 1, 0);
-        texture.Write(bufferData2, 0, 0, 1);
-
-        var bitmapOutput = new SKBitmap(texture.Width, texture.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-        var bufferDataOutput = GetTextureData(bitmapOutput);
-
-        texture.Read(texture.FullQuad, bufferDataOutput);
-
-        using var output = File.Create("output_ycocg.png");
+        using var output = File.Create($"output_{textureFormat}.png");
         bitmapOutput.Encode(output, SKEncodedImageFormat.Png, 100);
     }
 
     private static void Main(string[] args)
     {
-        TestWriteBgra8888IntoYCbCr420();
-        TestWriteBgra8888IntoYCoCg420();
+        TestWriteBgra8888Into(TextureFormat.YCbCr444);
+        TestWriteBgra8888Into(TextureFormat.YCbCr422);
+        TestWriteBgra8888Into(TextureFormat.YCbCr420);
+        TestWriteBgra8888Into(TextureFormat.YCoCg444);
+        TestWriteBgra8888Into(TextureFormat.YCoCg422);
+        TestWriteBgra8888Into(TextureFormat.YCoCg420);
 
         Console.WriteLine("Hello, World!");
     }
