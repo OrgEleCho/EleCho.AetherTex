@@ -72,6 +72,7 @@ namespace AetherTex.Viewer
             return new TextureData(bitmap.ColorType switch
             {
                 SKColorType.Gray8 => TextureFormat.Gray8,
+                SKColorType.Bgra8888 => TextureFormat.Bgra8888,
             }, bitmap.Width, bitmap.Height, bitmap.GetPixels(), bitmap.RowBytes);
         }
 

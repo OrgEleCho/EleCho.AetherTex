@@ -24,9 +24,9 @@ namespace EleCho.AetherTex.Processing
             _device = device;
             _deviceContext = deviceContext;
             _ySplitProcessor = new PixelProcessor(device, deviceContext, "color",
-                "0.29882 * color.r + 0.58681 * color.g + 0.114363 * color.b, 0, 0, 1");
+                "0.299 * color.r + 0.587 * color.g + 0.114 * color.b, 0, 0, 1");
             _uvSplitProcessor = new PixelProcessor(device, deviceContext, "color",
-                "-0.172485 * color.r - 0.338718 * color.g + 0.511207 * color.b, 0.51155 * color.r - 0.42811 * color.g - 0.08343 * color.b, 0, 1");
+                "-0.169 * color.r - 0.331 * color.g + 0.5 * color.b + 0.5, 0.5 * color.r - 0.419 * color.g - 0.081 * color.b + 0.5, 0, 1");
         }
 
         public void WriteTile(TextureData textureData, ComPtr<ID3D11Texture2D> tileTexture1, ComPtr<ID3D11Texture2D>? tileTexture2, uint subResource)

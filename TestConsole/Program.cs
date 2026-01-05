@@ -372,19 +372,24 @@ internal class Program
 
     static void TestWriteBgra8888IntoYuv420()
     {
-        var bitmap = SKBitmap.Decode("test.jpg");
-        var texture = new AetherTexImage(TextureFormat.Yuv420, bitmap.Width, bitmap.Height, 1, 1);
+        var bitmap = SKBitmap.Decode("PM5544.png");
+        var bitmap2 = SKBitmap.Decode("Test.jpg");
+        var texture = new AetherTexImage(TextureFormat.Yuv420, bitmap.Width, bitmap.Height, 2, 2);
 
         var bufferData = GetTextureData(bitmap);
-        texture.Write(bufferData, 0, 0, 0);
-
-        var bitmap2 = new SKBitmap(1024, 1024, SKColorType.Bgra8888, SKAlphaType.Unpremul);
         var bufferData2 = GetTextureData(bitmap2);
+        texture.Write(bufferData, 0, 0, 0);
+        texture.Write(bufferData, 0, 1, 1);
+        texture.Write(bufferData2, 0, 1, 0);
+        texture.Write(bufferData2, 0, 0, 1);
 
-        texture.Read(texture.FullQuad, bufferData2);
+        var bitmapOutput = new SKBitmap(texture.Width, texture.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        var bufferDataOutput = GetTextureData(bitmapOutput);
+
+        texture.Read(texture.FullQuad, bufferDataOutput);
 
         using var output = File.Create("output.png");
-        bitmap2.Encode(output, SKEncodedImageFormat.Png, 100);
+        bitmapOutput.Encode(output, SKEncodedImageFormat.Png, 100);
     }
 
     private static void Main(string[] args)

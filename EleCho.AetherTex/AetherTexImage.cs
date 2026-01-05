@@ -266,8 +266,10 @@ namespace EleCho.AetherTex
         {
             ShaderResourceViewDesc inputTextureShaderResourceViewDesc = new ShaderResourceViewDesc(
                 format: texture2DDesc.Format,
-                viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2D,
-                texture2D: new Tex2DSrv(
+                viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2Darray,
+                texture2DArray: new Tex2DArraySrv(
+                    arraySize: texture2DDesc.ArraySize,
+                    firstArraySlice: 0,
                     mipLevels: 1,
                     mostDetailedMip: 0));
 
@@ -277,6 +279,9 @@ namespace EleCho.AetherTex
             for (int i = 0; i < count; i++)
             {
                 textures[i] = DxUtils.CreateTexture2D(device, texture2DDesc);
+                Texture2DDesc desc = default;
+                textures[i].GetDesc(ref desc);
+
                 device.CreateShaderResourceView(textures[i], in inputTextureShaderResourceViewDesc, ref shaderResourceViews[i]);
             }
         }

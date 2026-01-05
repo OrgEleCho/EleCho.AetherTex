@@ -19,9 +19,9 @@ float3 yuv_to_rgb(float3 yuv)
     float u = yuv.y;
     float v = yuv.z;
 
-    float r = y                  + (1.370705 * v);
-    float g = y - (0.337633 * u) - (0.698001 * v);
-    float b = y + (1.732446 * u);
+    float r = y                 + (1.13983 * v);
+    float g = y - (0.39465 * u) - (0.58060 * v);
+    float b = y + (2.03211 * u);
 
     return float3(r, g, b);
 }
