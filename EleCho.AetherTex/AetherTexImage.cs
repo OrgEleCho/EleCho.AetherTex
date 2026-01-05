@@ -118,7 +118,7 @@ namespace EleCho.AetherTex
                 TextureFormat.I444 => "AetherTexImageI444.hlsl",
                 TextureFormat.I422 => "AetherTexImageI422.hlsl",
                 TextureFormat.I420 => "AetherTexImageI420.hlsl",
-                TextureFormat.Yuv420 => "AetherTexImageYuv420.hlsl",
+                TextureFormat.YCbCr420 => "AetherTexImageYCbCr420.hlsl",
                 TextureFormat.YCoCg420 => "AetherTexImageYCoCg420.hlsl",
                 _ => "AetherTexImage.hlsl",
             };
@@ -152,7 +152,7 @@ namespace EleCho.AetherTex
                 TextureFormat.I422 => Silk.NET.DXGI.Format.FormatR8Unorm,
                 TextureFormat.I420 => Silk.NET.DXGI.Format.FormatR8Unorm,
 
-                TextureFormat.Yuv420 => Silk.NET.DXGI.Format.FormatR8Unorm,
+                TextureFormat.YCbCr420 => Silk.NET.DXGI.Format.FormatR8Unorm,
                 TextureFormat.YCoCg420 => Silk.NET.DXGI.Format.FormatR8Unorm,
 
                 TextureFormat.Float32 => Silk.NET.DXGI.Format.FormatR32Float,
@@ -218,7 +218,7 @@ namespace EleCho.AetherTex
         }
 
         /// <summary>
-        /// 获取第二个纹理描述 (需要多个不同大小或格式的纹理组合的图像格式才需要实现这个. 例如 YUV420)
+        /// 获取第二个纹理描述 (需要多个不同大小或格式的纹理组合的图像格式才需要实现这个. 例如 YCbCr420)
         /// </summary>
         /// <param name="format"></param>
         /// <param name="width"></param>
@@ -229,7 +229,7 @@ namespace EleCho.AetherTex
         {
             return format switch
             {
-                TextureFormat.Yuv420 => new Texture2DDesc()
+                TextureFormat.YCbCr420 => new Texture2DDesc()
                 {
                     Width = (uint)(width / 2),
                     Height = (uint)(height / 2),
@@ -411,8 +411,8 @@ namespace EleCho.AetherTex
 
             _tileWriters = new ITileWriter[]
             {
-                new Bgra8888OrRgba8888ToYuv420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
-                new Bgra8888OrRgba8888ToYuv420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
+                new Bgra8888OrRgba8888ToYCbCr420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
+                new Bgra8888OrRgba8888ToYCbCr420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
                 new Bgra8888OrRgba8888ToYCoCg420TileWriter(_device, _deviceContext, TextureFormat.Bgra8888),
                 new Bgra8888OrRgba8888ToYCoCg420TileWriter(_device, _deviceContext, TextureFormat.Rgba8888),
                 new Bgra8888OrRgba8888ToRgba8888OrBgra8888TileWriter(_device, _deviceContext, TextureFormat.Bgra8888, TextureFormat.Rgba8888),

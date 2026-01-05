@@ -65,9 +65,9 @@ float4 sample_source(int sourceIndex, float2 texcoord)
     float2 uvInTile = calculate_uv_in_tile(tileSize, xyInTile);
     
     float4 colorY = _input[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
-    float4 colorUV = _inputAlt[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
+    float4 colorCbCr = _inputAlt[sourceIndex].Sample(_sampler, float3(uvInTile, tileIndex));
     
-    return float4(yuv_to_rgb(float3(colorY.x, colorUV.x - 0.5, colorUV.y - 0.5)), 1);
+    return float4(yuv_to_rgb(float3(colorY.x, colorCbCr.x - 0.5, colorCbCr.y - 0.5)), 1);
 }
 
 vs_out vs_main(vs_in input)

@@ -44,7 +44,7 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.I420 or
                 TextureFormat.I422 or
                 TextureFormat.I444 or
-                TextureFormat.Yuv420 or
+                TextureFormat.YCbCr420 or
                 TextureFormat.YCoCg420;
         }
 
@@ -57,7 +57,7 @@ namespace EleCho.AetherTex.Internal
                 TextureFormat.BayerGrbg or
                 TextureFormat.I420 or
                 TextureFormat.I422 or
-                TextureFormat.Yuv420 or
+                TextureFormat.YCbCr420 or
                 TextureFormat.YCoCg420;
         }
     }

@@ -29,12 +29,12 @@
         I420,
 
         /// <summary>
-        /// YUV420, Splitted
+        /// YCbCr 4:2:0, Splitted (Y plane + CbCr plane)
         /// </summary>
-        Yuv420,
+        YCbCr420,
 
         /// <summary>
-        /// YCoCg420, Splitted (Y plane + CoCg plane)
+        /// YCoCg 4:2:0, Splitted (Y plane + CoCg plane)
         /// </summary>
         YCoCg420,
 

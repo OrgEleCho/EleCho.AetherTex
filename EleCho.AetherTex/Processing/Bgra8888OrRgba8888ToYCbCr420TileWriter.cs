@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using EleCho.AetherTex.Converters;
 using EleCho.AetherTex.Internal;
 using EleCho.AetherTex.Utilities;
@@ -8,25 +8,25 @@ using Silk.NET.DXGI;
 
 namespace EleCho.AetherTex.Processing
 {
-    internal class Bgra8888OrRgba8888ToYuv420TileWriter : ITileWriter
+    internal class Bgra8888OrRgba8888ToYCbCr420TileWriter : ITileWriter
     {
         private bool _disposedValue;
         private readonly ComPtr<ID3D11Device> _device;
         private readonly ComPtr<ID3D11DeviceContext> _deviceContext;
         private readonly PixelProcessor _ySplitProcessor;
-        private readonly PixelProcessor _uvSplitProcessor;
+        private readonly PixelProcessor _cbcrSplitProcessor;
 
         public TextureFormat Source { get; }
 
-        public TextureFormat Target => TextureFormat.Yuv420;
+        public TextureFormat Target => TextureFormat.YCbCr420;
 
-        public Bgra8888OrRgba8888ToYuv420TileWriter(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> deviceContext, TextureFormat source)
+        public Bgra8888OrRgba8888ToYCbCr420TileWriter(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> deviceContext, TextureFormat source)
         {
             _device = device;
             _deviceContext = deviceContext;
             _ySplitProcessor = new PixelProcessor(device, deviceContext, "color",
                 "0.299 * color.r + 0.587 * color.g + 0.114 * color.b, 0, 0, 1");
-            _uvSplitProcessor = new PixelProcessor(device, deviceContext, "color",
+            _cbcrSplitProcessor = new PixelProcessor(device, deviceContext, "color",
                 "-0.169 * color.r - 0.331 * color.g + 0.5 * color.b + 0.5, 0.5 * color.r - 0.419 * color.g - 0.081 * color.b + 0.5, 0, 1");
 
             Source = source;
@@ -54,7 +54,7 @@ namespace EleCho.AetherTex.Processing
             });
 
             using var shaderResourceView = DxUtils.CreateShaderResourceView(_device, texture, new ShaderResourceViewDesc(
-                format: Format.FormatB8G8R8A8Unorm,
+                format: Source.ToDirectX(),
                 viewDimension: D3DSrvDimension.D3D11SrvDimensionTexture2D,
                 texture2D: new Tex2DSrv(
                     mipLevels: 1,
@@ -101,8 +101,10 @@ namespace EleCho.AetherTex.Processing
             }))
             {
                 using var rt = DxUtils.CreateRenderTargetView(_device, texture2Buffer);
-                _uvSplitProcessor.Process(shaderResourceView, rt, textureData.Width / 2, textureData.Height / 2);
-                _deviceContext.CopySubresourceRegion(tileTexture2.Value, subResource, 0, 0, 0, texture2Buffer, 0, in copySrcBox);
+                _cbcrSplitProcessor.Process(shaderResourceView, rt, textureData.Width / 2, textureData.Height / 2);
+
+                var copySrcBox2 = new Box(0, 0, 0, (uint)(textureData.Width / 2), (uint)(textureData.Height / 2), 1);
+                _deviceContext.CopySubresourceRegion(tileTexture2.Value, subResource, 0, 0, 0, texture2Buffer, 0, in copySrcBox2);
             }
         }
 
@@ -111,12 +113,12 @@ namespace EleCho.AetherTex.Processing
             if (!_disposedValue)
             {
                 _ySplitProcessor.Dispose();
-                _uvSplitProcessor.Dispose();
+                _cbcrSplitProcessor.Dispose();
                 _disposedValue = true;
             }
         }
 
-        ~Bgra8888OrRgba8888ToYuv420TileWriter()
+        ~Bgra8888OrRgba8888ToYCbCr420TileWriter()
         {
             Dispose(disposing: false);
         }

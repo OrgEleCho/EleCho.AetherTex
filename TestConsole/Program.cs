@@ -370,11 +370,11 @@ internal class Program
         }
     }
 
-    static void TestWriteBgra8888IntoYuv420()
+    static void TestWriteBgra8888IntoYCbCr420()
     {
         var bitmap = SKBitmap.Decode("PM5544.png");
         var bitmap2 = SKBitmap.Decode("Test.jpg");
-        var texture = new AetherTexImage(TextureFormat.Yuv420, bitmap.Width, bitmap.Height, 2, 2);
+        var texture = new AetherTexImage(TextureFormat.YCbCr420, bitmap.Width, bitmap.Height, 2, 2);
 
         var bufferData = GetTextureData(bitmap);
         var bufferData2 = GetTextureData(bitmap2);
@@ -416,7 +416,7 @@ internal class Program
 
     private static void Main(string[] args)
     {
-        TestWriteBgra8888IntoYuv420();
+        TestWriteBgra8888IntoYCbCr420();
         TestWriteBgra8888IntoYCoCg420();
 
         Console.WriteLine("Hello, World!");
